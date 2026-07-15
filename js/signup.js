@@ -110,19 +110,21 @@ function sdRevealToken(data, product, productName) {
   sd$('sdTokenEnter').style.display = '';
 }
 
-/* "Enter with this token": vuelve al fork/cliente con el token autocompletado
-   y el producto preseleccionado. El plan ya elegido se mantiene (fromSignup). */
+/* "Continuar": el alta ya generó el token y el chat ya definió plan, tipo de
+   firma y proveedor. Vamos al paso de origen del documento (s-docsource) con
+   todo precargado (token en memoria + proveedor que usará el envío). Saltamos
+   s-client y s-done; el builder se alcanza al elegir cómo armar el documento. */
 function sdFinishSignup() {
-  fromSignup = true;
   ACC.token = signupToken;
   ACC.product = signupProduct;
-  sd$('sdTok').value = signupToken;
-  // preseleccionar el producto en s-client
-  const opts = document.querySelectorAll('#s-client .sd-opt');
-  opts.forEach(o => o.classList.remove('sel'));
-  const idx = signupProduct === 'esaw' ? 1 : 0;
-  if (opts[idx]) opts[idx].classList.add('sel');
-  sdGo('s-client');
+  ACC.provider = signupProduct; // el proveedor del envío = el que definió el chat
+  sd$('sdTok').value = signupToken; // el envío lee el token desde ACC.token
+  // El select del envío (bulksend) usa la MISMA fuente: dejarlo alineado.
+  const sel = document.getElementById('cfg-provider');
+  if (sel) sel.value = ACC.provider;
+  // SMS no tiene documento → no hay builder (el envío va por el puente).
+  if (operationType === 'sms') { alert(t('sendtype.smsAlert')); return; }
+  sdGo('s-docsource'); // elegir origen del documento (IA vs PDF propio) → builder
 }
 
 const sdEscConsole = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));

@@ -532,6 +532,8 @@ td { padding:8px 12px; border-bottom:1px solid var(--surface-2); max-width:200px
 .sd-typing i:nth-child(3){ animation-delay:.4s; }
 @keyframes sdblink { 0%,60%,100%{opacity:.3} 30%{opacity:1} }
 .sd-chat-actions { padding:12px 14px; border-top:1px solid var(--border); background:var(--surface); display:flex; flex-wrap:wrap; gap:8px; flex-shrink:0; min-height:58px; align-items:center; }
+/* Cuando no hay chips (se limpian entre pasos), colapsar la barra para no dejar un hueco vacío al pie */
+.sd-chat-actions:empty { display:none; }
 .sd-chip { border:1.5px solid var(--sig-primary); background:var(--surface-2); color:var(--sig-primary); border-radius:20px; padding:8px 15px; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; font-family:inherit; }
 .sd-chip:hover { background:var(--sig-primary); color:#fff; transform:translateY(-1px); }
 .sd-chat-hint { font-size:11.5px; color:var(--text-muted); padding:0 2px; }

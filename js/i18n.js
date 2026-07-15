@@ -17,7 +17,7 @@
 const SD_LANG = (function () {
   const ov = (typeof localStorage !== 'undefined') && localStorage.getItem('SD_LANG');
   if (ov === 'es' || ov === 'en') return ov;
-  return (typeof navigator !== 'undefined' && /^es/i.test(navigator.language || '')) ? 'es' : 'en';
+  return 'en'; // UI en inglés por defecto (decisión de Marcos). ES sigue disponible vía override.
 })();
 
 const I18N = {
@@ -26,7 +26,7 @@ const I18N = {
     'top.tagline': 'demo · simulated payments',
     // crumbs
     'crumb.s-fork': 'Start', 'crumb.s-client': 'Sign in', 'crumb.s-quiz': 'Assistant',
-    'crumb.s-signup': 'Your details', 'crumb.s-token': 'Your token', 'crumb.s-plans': 'Plans',
+    'crumb.s-signup': 'Your details', 'crumb.s-token': 'Your account', 'crumb.s-plans': 'Plans',
     'crumb.s-pay': 'Payment', 'crumb.s-done': 'Confirmation', 'crumb.s-sendtype': 'Request type',
     'crumb.s-builder': 'PDF Builder', 'crumb.s-docsource': 'Document',
     'docsource.title': 'How do you want your document?',
@@ -82,7 +82,7 @@ const I18N = {
     'signup.note': "ℹ️ Automatic account creation via API isn't available yet. In this demo we simulate the round-trip.",
     'signup.create': 'Create my account →',
     // token
-    'token.title': 'Your token',
+    'token.title': 'Your account',
     'token.lead': 'Setting up your account — this only takes a moment.',
     'setup.connecting': 'Connecting to {product}',
     'setup.creating': 'Creating your account',
@@ -94,7 +94,7 @@ const I18N = {
     'setup.done': 'Account ready',
     'token.genLabel': 'Generated token (lives only in this session)',
     'token.mailHead': '📧 Welcome email preview',
-    'token.enter': 'Enter with this token →',
+    'token.enter': 'Continue →',
     // done
     'done.continue': 'Continue →',
     // sendtype
@@ -133,14 +133,6 @@ const I18N = {
     'chat.info.vol.mid.monthly': 'That\'s the range where manual work starts to hurt: <b>~2 minutes per document</b> is over 30 hours a month.',
     'chat.info.vol.high.monthly': 'High volume. At that scale, every minute you save per document is <b>days of work per year</b>.',
 
-    'chat.q.ia': 'Got it. One that matters a lot: <b>do you want the AI to build the documents for you?</b><br><br>The AI reads your document, decides where each signature field goes and applies your brand. You confirm. <i>Without AI, everything still works — you just do it by hand.</i>',
-    'chat.opt.ia.yes': 'Yes, let the AI do it', 'chat.opt.ia.no': 'I prefer manual', 'chat.opt.ia.explain': 'What does it do exactly?',
-    'chat.info.ia.yes': '<b>Nice.</b> The AI pre-fills for you: it places the fields, pulls the colors from your brand book and maps your spreadsheet columns. You always have the last word.',
-    'chat.info.ia.no': '<b>Perfect, and it\'s free.</b> Manual mode does everything the same: load the document, place the fields, cross the spreadsheet. The AI just saves you clicks.',
-    'chat.ia.exampleIntro': 'Let me show you with a real example 👇',
-    'chat.ia.example': '<b>Without AI:</b> you open the document, write <code>{{sign}}</code> where the signature goes, pick your color by hand and map each spreadsheet column.<br><br><b>With AI:</b> you upload the document and your brand book. The AI detects that the signature goes at the end, pulls your corporate color from the brand book and maps the columns itself. You review and confirm.<br><br>The difference is time, not capability: <b>both paths reach the same PDF</b>.',
-    'chat.ia.so': 'So?',
-
     'chat.q.team': 'And to wrap up — is this just for you, or would you like access for others on your team too?',
     'chat.opt.team.1': 'Just for me', 'chat.opt.team.few': 'A few of us', 'chat.opt.team.many': 'My whole team',
     'chat.info.team.1': 'A single seat, all set. You can always add teammates later.',
@@ -153,7 +145,6 @@ const I18N = {
     'chat.reply.monthly': 'Every month', 'chat.reply.oneshot': 'Just once', 'chat.reply.sometimes': 'Now and then',
     'chat.reply.vol.low.oneshot': 'Between 10 and 100', 'chat.reply.vol.mid.oneshot': 'Between 100 and 500', 'chat.reply.vol.high.oneshot': 'More than 500',
     'chat.reply.vol.low.monthly': 'Up to 100 per month', 'chat.reply.vol.mid.monthly': 'Between 100 and 1,000', 'chat.reply.vol.high.monthly': 'More than 1,000',
-    'chat.reply.ia.yes': 'Yes, I want the AI', 'chat.reply.ia.no': 'I prefer to do it manually', 'chat.reply.ia.explain': 'What does it do exactly?',
     'chat.reply.team.1': 'Just for me', 'chat.reply.team.few': 'A few of us', 'chat.reply.team.many': 'My whole team',
 
     // chat misc
@@ -162,7 +153,7 @@ const I18N = {
     'chat.progress': '{i} of {total}',
     'chat.done.pack': 'Done 🎯 No need to subscribe: based on what you told me, the <b>{name}</b> fits you. Pay once and you\'re set.',
     'chat.done.plan': 'Done 🎯 Based on what you told me, the plan that fits you is <b>{name}</b>.<br><br>Here are the options so you can compare.',
-    'chat.seePacks': 'See the packs →', 'chat.seePlan': 'See my plan →',
+    'chat.seePacks': 'Continue →', 'chat.seePlan': 'Continue →',
 
     // plans/packs
     'plan.for.starter': 'To get started solo', 'plan.note.starter': 'Up to 100 documents per month',
@@ -176,24 +167,23 @@ const I18N = {
     'why.text': 'You told us: {list}. That\'s why we recommend <b>{name}</b>.',
     'why.oneshot': 'a one-off send', 'why.occasional': 'occasional use',
     'why.vol.low': 'low volume', 'why.vol.mid': 'medium volume', 'why.vol.high': 'high volume',
-    'why.ia.yes': 'you want the AI layer', 'why.ia.no': 'you prefer manual mode',
     'why.team.1': 'individual use', 'why.team.few': 'team of up to 5', 'why.team.many': 'more than 5 people',
     // features
     'feat.pdfGen': 'PDF generator from Word/TXT', 'feat.data': 'Data from CSV, JSON, XLSX',
     'feat.bulk': 'Bulk send with your token', 'feat.noSub': 'No subscription or renewal',
-    'feat.neverExpires': 'The pack never expires', 'feat.ai': 'AI layer',
+    'feat.neverExpires': 'The pack never expires', 'feat.ai': 'Namirial Dispatch drafting',
     'feat.manualPlace': 'Manual field placement', 'feat.multiUser': 'Multi-user',
     'feat.everythingSmall': 'Everything in the Small Pack', 'feat.upTo500': 'Up to 500 documents',
-    'feat.aiFields': 'AI: places the fields for you', 'feat.aiBrand': 'AI: applies your brand book',
+    'feat.aiFields': 'Namirial Dispatch places the fields for you', 'feat.aiBrand': 'Namirial Dispatch applies your brand book',
     'feat.everythingMedium': 'Everything in the Medium Pack', 'feat.upTo2000': 'Up to 2,000 documents',
-    'feat.fullAi': 'Full AI', 'feat.supportSend': 'Support during the send',
-    'feat.everythingStarter': 'Everything in Starter', 'feat.aiMapping': 'AI: automatic data mapping',
+    'feat.fullAi': 'Full Namirial Dispatch drafting', 'feat.supportSend': 'Support during the send',
+    'feat.everythingStarter': 'Everything in Starter', 'feat.aiMapping': 'Namirial Dispatch: automatic data mapping',
     'feat.upTo5Users': 'Up to 5 users', 'feat.prioritySupport': 'Priority support',
     'feat.everythingPro': 'Everything in Pro', 'feat.unlimitedDocs': 'Unlimited documents',
     'feat.unlimitedUsers': 'Unlimited users', 'feat.crm': 'CRM integration',
     'feat.dedicatedSupport': 'Dedicated support + SLA', 'feat.assistedOnboarding': 'Assisted onboarding',
     // pay summary
-    'pay.plan.suffix': 'plan', 'pay.included': 'included', 'pay.aiLayer': 'AI layer',
+    'pay.plan.suffix': 'plan', 'pay.included': 'included', 'pay.aiLayer': 'Namirial Dispatch drafting',
     'pay.renewal': 'Renewal', 'pay.none': 'None · one-time', 'pay.totalToday': 'Total today',
     'pay.processing': 'Processing…',
     // done / recap
@@ -202,7 +192,7 @@ const I18N = {
     'done.sub.new': 'Your {plan} account is ready. The token lives only in this session.',
     'recap.type': 'Type', 'recap.plan': 'Plan', 'recap.existingCustomer': 'Existing customer',
     'recap.token': 'Token', 'recap.inMemory': 'in memory', 'recap.persistence': 'Persistence', 'recap.none': 'None',
-    'recap.aiLayer': 'AI layer', 'recap.enabled': 'Enabled', 'recap.manual': 'Manual mode',
+    'recap.aiLayer': 'Namirial Dispatch drafting', 'recap.enabled': 'Enabled', 'recap.manual': 'Manual mode',
     // signup console/email
     'signup.creating': '… creating account', 'signup.sendingMail': 'sending welcome email to {email}',
     'signup.mail.body': '<b>Welcome, {name}!</b><br><br>Your account (<b>{email}</b>) is ready. You now have access.<br><br>For security, your API token is never sent by email — you\'ll find it in your dashboard.',
@@ -210,13 +200,13 @@ const I18N = {
     'sendtype.smsNote': '📱 Certified SMS has no document to build, so it skips the PDF Builder. It goes straight to sending — available once the builder→send bridge is connected.',
     'sendtype.smsAlert': 'Certified SMS skips the PDF Builder. Sending will be available when the bridge is connected.',
     // header pills
-    'pill.aiActive': 'AI active', 'pill.manualMode': 'manual mode',
+    'pill.aiActive': 'Namirial Dispatch', 'pill.manualMode': 'manual mode',
   },
 
   es: {
     'top.tagline': 'demo · pagos simulados',
     'crumb.s-fork': 'Inicio', 'crumb.s-client': 'Ingresar', 'crumb.s-quiz': 'Asistente',
-    'crumb.s-signup': 'Tus datos', 'crumb.s-token': 'Tu token', 'crumb.s-plans': 'Planes',
+    'crumb.s-signup': 'Tus datos', 'crumb.s-token': 'Tu cuenta', 'crumb.s-plans': 'Planes',
     'crumb.s-pay': 'Pago', 'crumb.s-done': 'Confirmación', 'crumb.s-sendtype': 'Tipo de envío',
     'crumb.s-builder': 'PDF Builder', 'crumb.s-docsource': 'Documento',
     'docsource.title': '¿Cómo querés tu documento?',
@@ -264,7 +254,7 @@ const I18N = {
     'signup.company': 'Empresa', 'signup.username': 'Usuario', 'signup.phone': 'Teléfono',
     'signup.note': 'ℹ️ La creación de cuenta por API todavía no está disponible. En esta demo simulamos el ida y vuelta.',
     'signup.create': 'Crear mi cuenta →',
-    'token.title': 'Tu token',
+    'token.title': 'Tu cuenta',
     'token.lead': 'Estamos creando tu cuenta — tarda solo un momento.',
     'setup.connecting': 'Conectando con {product}',
     'setup.creating': 'Creando tu cuenta',
@@ -276,7 +266,7 @@ const I18N = {
     'setup.done': 'Cuenta lista',
     'token.genLabel': 'Token generado (vive solo en esta sesión)',
     'token.mailHead': '📧 Vista previa del email de bienvenida',
-    'token.enter': 'Entrar con este token →',
+    'token.enter': 'Continuar →',
     'done.continue': 'Continuar →',
     'sendtype.title': '¿Qué vas a enviar?',
     'sendtype.lead': 'Elegí el tipo de solicitud. Es el mismo conjunto que ya soporta el envío masivo.',
@@ -312,14 +302,6 @@ const I18N = {
     'chat.info.vol.mid.monthly': 'Ese es el rango donde el trabajo manual empieza a doler: <b>~2 minutos por documento</b> son más de 30 horas al mes.',
     'chat.info.vol.high.monthly': 'Alto volumen. A esa escala, cada minuto que ahorrás por documento son <b>días de trabajo al año</b>.',
 
-    'chat.q.ia': 'Entendido. Una que importa mucho: <b>¿querés que la IA arme los documentos por vos?</b><br><br>La IA lee tu documento, decide dónde va cada campo de firma y aplica tu marca. Vos confirmás. <i>Sin IA todo funciona igual — solo que lo hacés a mano.</i>',
-    'chat.opt.ia.yes': 'Sí, que lo haga la IA', 'chat.opt.ia.no': 'Prefiero manual', 'chat.opt.ia.explain': '¿Qué hace exactamente?',
-    'chat.info.ia.yes': '<b>Buenísimo.</b> La IA te precarga todo: coloca los campos, saca los colores de tu manual de marca y mapea las columnas de tu planilla. Siempre tenés la última palabra.',
-    'chat.info.ia.no': '<b>Perfecto, y es gratis.</b> El modo manual hace todo igual: cargás el documento, colocás los campos, cruzás la planilla. La IA solo te ahorra clics.',
-    'chat.ia.exampleIntro': 'Te muestro con un ejemplo real 👇',
-    'chat.ia.example': '<b>Sin IA:</b> abrís el documento, escribís <code>{{sign}}</code> donde va la firma, elegís tu color a mano y mapeás cada columna de la planilla.<br><br><b>Con IA:</b> subís el documento y tu manual de marca. La IA detecta que la firma va al final, saca tu color corporativo del manual y mapea las columnas sola. Vos revisás y confirmás.<br><br>La diferencia es tiempo, no capacidad: <b>los dos caminos llegan al mismo PDF</b>.',
-    'chat.ia.so': '¿Entonces?',
-
     'chat.q.team': 'Y para cerrar — ¿es solo para vos, o querés dar acceso a otras personas de tu equipo también?',
     'chat.opt.team.1': 'Solo para mí', 'chat.opt.team.few': 'Algunos de nosotros', 'chat.opt.team.many': 'Todo mi equipo',
     'chat.info.team.1': 'Una sola licencia, listo. Siempre podés sumar compañeros más adelante.',
@@ -331,7 +313,6 @@ const I18N = {
     'chat.reply.monthly': 'Todos los meses', 'chat.reply.oneshot': 'Una sola vez', 'chat.reply.sometimes': 'De vez en cuando',
     'chat.reply.vol.low.oneshot': 'Entre 10 y 100', 'chat.reply.vol.mid.oneshot': 'Entre 100 y 500', 'chat.reply.vol.high.oneshot': 'Más de 500',
     'chat.reply.vol.low.monthly': 'Hasta 100 por mes', 'chat.reply.vol.mid.monthly': 'Entre 100 y 1.000', 'chat.reply.vol.high.monthly': 'Más de 1.000',
-    'chat.reply.ia.yes': 'Sí, quiero la IA', 'chat.reply.ia.no': 'Prefiero hacerlo a mano', 'chat.reply.ia.explain': '¿Qué hace exactamente?',
     'chat.reply.team.1': 'Solo para mí', 'chat.reply.team.few': 'Algunos de nosotros', 'chat.reply.team.many': 'Todo mi equipo',
 
     'chat.gotIt': 'Perfecto 👍',
@@ -339,7 +320,7 @@ const I18N = {
     'chat.progress': '{i} de {total}',
     'chat.done.pack': 'Listo 🎯 No hace falta suscribirse: por lo que me contaste, te sirve el <b>{name}</b>. Pagás una vez y quedás.',
     'chat.done.plan': 'Listo 🎯 Por lo que me contaste, el plan que te sirve es <b>{name}</b>.<br><br>Acá están las opciones para que compares.',
-    'chat.seePacks': 'Ver los packs →', 'chat.seePlan': 'Ver mi plan →',
+    'chat.seePacks': 'Continuar →', 'chat.seePlan': 'Continuar →',
 
     'plan.for.starter': 'Para arrancar solo', 'plan.note.starter': 'Hasta 100 documentos por mes',
     'plan.for.pro': 'Para equipos que envían seguido', 'plan.note.pro': 'Hasta 1.000 documentos por mes',
@@ -352,22 +333,21 @@ const I18N = {
     'why.text': 'Nos dijiste: {list}. Por eso te recomendamos <b>{name}</b>.',
     'why.oneshot': 'un envío puntual', 'why.occasional': 'uso ocasional',
     'why.vol.low': 'volumen bajo', 'why.vol.mid': 'volumen medio', 'why.vol.high': 'volumen alto',
-    'why.ia.yes': 'querés la capa de IA', 'why.ia.no': 'preferís el modo manual',
     'why.team.1': 'uso individual', 'why.team.few': 'equipo de hasta 5', 'why.team.many': 'más de 5 personas',
     'feat.pdfGen': 'Generador de PDF desde Word/TXT', 'feat.data': 'Datos desde CSV, JSON, XLSX',
     'feat.bulk': 'Envío masivo con tu token', 'feat.noSub': 'Sin suscripción ni renovación',
-    'feat.neverExpires': 'El pack no vence nunca', 'feat.ai': 'Capa de IA',
+    'feat.neverExpires': 'El pack no vence nunca', 'feat.ai': 'Redacción Namirial Dispatch',
     'feat.manualPlace': 'Colocación manual de campos', 'feat.multiUser': 'Multiusuario',
     'feat.everythingSmall': 'Todo lo del Pack Pequeño', 'feat.upTo500': 'Hasta 500 documentos',
-    'feat.aiFields': 'IA: coloca los campos por vos', 'feat.aiBrand': 'IA: aplica tu manual de marca',
+    'feat.aiFields': 'Namirial Dispatch coloca los campos por vos', 'feat.aiBrand': 'Namirial Dispatch aplica tu manual de marca',
     'feat.everythingMedium': 'Todo lo del Pack Mediano', 'feat.upTo2000': 'Hasta 2.000 documentos',
-    'feat.fullAi': 'IA completa', 'feat.supportSend': 'Soporte durante el envío',
-    'feat.everythingStarter': 'Todo lo de Starter', 'feat.aiMapping': 'IA: mapeo automático de datos',
+    'feat.fullAi': 'Redacción Namirial Dispatch completa', 'feat.supportSend': 'Soporte durante el envío',
+    'feat.everythingStarter': 'Todo lo de Starter', 'feat.aiMapping': 'Namirial Dispatch: mapeo automático de datos',
     'feat.upTo5Users': 'Hasta 5 usuarios', 'feat.prioritySupport': 'Soporte prioritario',
     'feat.everythingPro': 'Todo lo de Pro', 'feat.unlimitedDocs': 'Documentos ilimitados',
     'feat.unlimitedUsers': 'Usuarios ilimitados', 'feat.crm': 'Integración con CRM',
     'feat.dedicatedSupport': 'Soporte dedicado + SLA', 'feat.assistedOnboarding': 'Onboarding asistido',
-    'pay.plan.suffix': 'plan', 'pay.included': 'incluida', 'pay.aiLayer': 'Capa de IA',
+    'pay.plan.suffix': 'plan', 'pay.included': 'incluida', 'pay.aiLayer': 'Redacción Namirial Dispatch',
     'pay.renewal': 'Renovación', 'pay.none': 'Ninguna · pago único', 'pay.totalToday': 'Total hoy',
     'pay.processing': 'Procesando…',
     'done.title.client': 'Sesión iniciada', 'done.title.new': '¡Todo listo!',
@@ -375,12 +355,12 @@ const I18N = {
     'done.sub.new': 'Tu cuenta {plan} está lista. El token vive solo en esta sesión.',
     'recap.type': 'Tipo', 'recap.plan': 'Plan', 'recap.existingCustomer': 'Cliente existente',
     'recap.token': 'Token', 'recap.inMemory': 'en memoria', 'recap.persistence': 'Persistencia', 'recap.none': 'Ninguna',
-    'recap.aiLayer': 'Capa de IA', 'recap.enabled': 'Activada', 'recap.manual': 'Modo manual',
+    'recap.aiLayer': 'Redacción Namirial Dispatch', 'recap.enabled': 'Activada', 'recap.manual': 'Modo manual',
     'signup.creating': '… creando cuenta', 'signup.sendingMail': 'enviando email de bienvenida a {email}',
     'signup.mail.body': '<b>¡Bienvenido, {name}!</b><br><br>Tu cuenta (<b>{email}</b>) está lista. Ya tenés acceso.<br><br>Por seguridad, tu token de API nunca se envía por email — lo encontrás en tu panel.',
     'sendtype.smsNote': '📱 El SMS certificado no tiene documento para armar, así que saltea el PDF Builder. Va directo al envío — disponible cuando se conecte el puente builder→envío.',
     'sendtype.smsAlert': 'El SMS certificado saltea el PDF Builder. El envío estará disponible cuando se conecte el puente.',
-    'pill.aiActive': 'IA activa', 'pill.manualMode': 'modo manual',
+    'pill.aiActive': 'Namirial Dispatch', 'pill.manualMode': 'modo manual',
   },
 };
 

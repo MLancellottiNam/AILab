@@ -21,7 +21,8 @@ const builderState = {
   previewIdx: 0,
   dispatchDocs: [],  // DispatchDoc[] de la última corrida (en memoria)
   detected: [],      // campos detectados en el editor libre
-  logoDataUrl: ''    // logo de marca (dataURL en memoria, cero persistencia)
+  logoDataUrl: '',   // logo de marca (dataURL en memoria, cero persistencia)
+  brandFooter: ''    // footer de marca (lo deriva extract-brand del brandbook)
 };
 
 /* ===== Helpers locales ===== */
@@ -457,12 +458,40 @@ function sdbOnDataLoaded(fileName, format) {
   sdb$('sdbDropData').classList.add('ok');
   sdb$('sdbDropDataLabel').innerHTML = `✓ <b>${sdbEsc(fileName)}</b> (${format})<br><span class="sdb-sub">${rows.length} rows · ${headers.length} columns</span>`;
   sdb$('sdbDataInfo').innerHTML = 'Columns: ' + headers.map(h => `<code>${sdbEsc(h)}</code>`).join(' ');
+  sdbCheckContact(headers); // avisar si falta email/teléfono para poder enviar
   sdbUnlockDocCard(); // ya hay datos → habilitar el documento
   sdbUpdQuota();
   sdbSyncColTray();
   sdbRenderPreview();
   sdbCheckReady();
 }
+/* Validación de contacto: para poder ENVIAR, la lista necesita una columna de
+   email (firma/email) o teléfono (SMS). Avisamos al cargar el CSV/XLSX. No
+   bloquea la generación de PDFs (eso no necesita contacto), pero deja claro que
+   sin contacto no se puede mandar. */
+const SDB_RX_EMAIL = /e-?mail|correo|mail/i;
+const SDB_RX_PHONE = /phone|tel[eé]?fono|\btel\b|m[oó]vil|movil|celular|whats/i;
+function sdbCheckContact(headers) {
+  const box = sdb$('sdbContactNote');
+  const hasEmail = headers.some(h => SDB_RX_EMAIL.test(h));
+  const hasPhone = headers.some(h => SDB_RX_PHONE.test(h));
+  const sendType = (typeof ACC !== 'undefined' && ACC.sendType) || null;
+  builderState.hasContact = hasEmail || hasPhone;
+
+  let msg = '', kind = 'ok';
+  if (sendType === 'sms') {
+    if (hasPhone) { msg = '✓ Phone column detected — ready to send by SMS.'; }
+    else { msg = '⚠ No phone column found. Certified SMS needs a phone number per row — add one to your list to be able to send.'; kind = 'warn'; }
+  } else if (sendType) { // advanced / simple / email → email
+    if (hasEmail) { msg = '✓ Email column detected — ready to send.'; }
+    else { msg = '⚠ No email column found. You need an email per recipient to send for signature — add one to your list.'; kind = 'warn'; }
+  } else { // sin tipo definido: aceptamos cualquiera de los dos
+    if (hasEmail || hasPhone) { msg = `✓ Contact column detected (${hasEmail ? 'email' : ''}${hasEmail && hasPhone ? ' + ' : ''}${hasPhone ? 'phone' : ''}).`; }
+    else { msg = '⚠ No email or phone column found. You\'ll need one to send the documents afterwards.'; kind = 'warn'; }
+  }
+  if (box) { box.className = 'sdb-detect-note show ' + kind; box.innerHTML = msg; box.style.display = 'block'; }
+}
+
 function sdbUpdQuota() {
   const rows = typeof dataRows !== 'undefined' ? dataRows : [];
   const acc = sdbAcc();
@@ -560,8 +589,11 @@ async function sdbExtractBrand(files) {
     sdb$('sdbBrandHex').value = data.primary;
     sdbSyncBrand();
     const fontVal = sdbMatchFont(data.font);
-    if (fontVal) { sdb$('sdbBrandFont').value = fontVal; sdbRenderPreview(); }
-    sdbNote(`✓ Brand applied from <b>${sdbEsc(f.name)}</b>: color <code>${sdbEsc(data.primary)}</code>${data.font ? ` · font “${sdbEsc(data.font)}”${fontVal ? '' : ' (no close match, kept current)'}` : ''}. Tweak it if you like.`, 'ok');
+    if (fontVal) { sdb$('sdbBrandFont').value = fontVal; }
+    // Footer de marca derivado del brandbook → va al pie de cada PDF.
+    builderState.brandFooter = (data && typeof data.footer === 'string') ? data.footer.trim() : '';
+    sdbRenderPreview();
+    sdbNote(`✓ Brand applied from <b>${sdbEsc(f.name)}</b>: color <code>${sdbEsc(data.primary)}</code>${data.font ? ` · font “${sdbEsc(data.font)}”${fontVal ? '' : ' (no close match, kept current)'}` : ''}${builderState.brandFooter ? ' · footer added' : ''}. Tweak it if you like.`, 'ok');
   } catch (e) {
     // REGLA DE ORO: sin IA / error → selección manual, sin romper nada.
     sdbNote('We couldn\'t read the brand book with AI — set the color and font manually below.', 'warn');
@@ -642,8 +674,8 @@ function sdbBuildDocEl(row, idx) {
     <div class="sdb-body" style="padding:34px 48px 40px">
       ${sdbFillTemplate(builderState.docHtml, row)}
     </div>
-    <div style="border-top:1px solid #e6e9ef;margin:0 48px;padding:14px 0 20px;font-size:10px;color:#9aa4b2;display:flex;justify-content:space-between;font-family:monospace">
-      <span>${sdbEsc(title)}</span><span>Generated with Namirial Dispatch</span>
+    <div style="border-top:1px solid #e6e9ef;margin:0 48px;padding:14px 0 20px;font-size:10px;color:#9aa4b2;display:flex;justify-content:space-between;gap:16px;font-family:monospace">
+      <span>${sdbEsc(builderState.brandFooter || title)}</span><span style="white-space:nowrap">Generated with Namirial Dispatch</span>
     </div>`;
 
   // Espaciado de párrafos (por si el CSS de la hoja no aplica en el PDF).
@@ -793,47 +825,56 @@ async function sdbGenerate() {
   // antes, html2canvas puede producir una página en blanco.
   if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
 
-  for (let i = 0; i < n; i++) {
-    const row = rows[i];
-    const el = sdbBuildDocEl(row, i);
+  // Overlay de render VISIBLE. Clave: html2canvas rasteriza en blanco un nodo
+  // con opacity:0 / fuera de pantalla en algunos navegadores (Edge/Chrome
+  // headed). Renderizando el documento realmente pintado en pantalla, la
+  // captura es fiable. El overlay tapa la vista y muestra el progreso, así que
+  // no se ve como un glitch. Se quita al terminar.
+  const rstage = document.createElement('div');
+  rstage.setAttribute('aria-hidden', 'true');
+  rstage.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:rgba(11,14,17,.94);display:flex;flex-direction:column;align-items:center;gap:14px;padding:22px;overflow:auto';
+  const rmsg = document.createElement('div');
+  rmsg.style.cssText = 'color:#eaf0f4;font:600 14px/1.4 "IBM Plex Sans",system-ui,sans-serif;flex-shrink:0';
+  const rhold = document.createElement('div');
+  rhold.style.cssText = 'width:794px;max-width:100%;background:#fff;flex-shrink:0;box-shadow:0 10px 40px rgba(0,0,0,.5)';
+  rstage.appendChild(rmsg); rstage.appendChild(rhold);
+  document.body.appendChild(rstage);
 
-    // Adjuntamos el nodo CON layout real, en pantalla pero invisible
-    // (opacity:0 detrás de todo). Posicionarlo en left:-10000 hace que
-    // html2canvas capture con coordenada negativa y recorte la izquierda; y un
-    // nodo sin layout se rasteriza con alto 0 → PDF en blanco.
-    const stage = document.createElement('div');
-    stage.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;opacity:0;z-index:-1;pointer-events:none';
-    stage.appendChild(el);
-    document.body.appendChild(stage);
+  try {
+    for (let i = 0; i < n; i++) {
+      const row = rows[i];
+      const el = sdbBuildDocEl(row, i);
 
-    // Dos frames para asegurar que el navegador hizo layout + paint del nodo
-    // antes de rasterizar (evita capturas en blanco en algunos navegadores).
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      // Documento visible dentro del overlay (pintado de verdad → captura fiable).
+      rmsg.textContent = `Generating PDF ${i + 1} of ${n}…`;
+      rhold.innerHTML = '';
+      rhold.appendChild(el);
+      // Dos frames para asegurar layout + paint antes de rasterizar.
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-    const fname = `${sdbSlug(title)}_${sdbSlug(String((nameKey && row[nameKey]) || ('doc_' + (i + 1))))}.pdf`;
+      const fname = `${sdbSlug(title)}_${sdbSlug(String((nameKey && row[nameKey]) || ('doc_' + (i + 1))))}.pdf`;
 
-    let blob;
-    try {
-      blob = await sdbNodeToPdfBlob(el);
-    } finally {
-      document.body.removeChild(stage);
+      // El nodo `el` ya está pintado dentro del overlay visible (rhold) → captura fiable.
+      const blob = await sdbNodeToPdfBlob(el);
+      // Cero persistencia: el blob queda en memoria (dispatchDocs) y de ahí lo
+      // toma el puente para enviar. La descarga a disco es opcional ("Download a copy").
+      builderState.dispatchDocs.push(sdbBuildDispatchDoc(row, blob));
+
+      const it = document.createElement('div');
+      it.className = 'sdb-result-item';
+      it.innerHTML = `<span class="sdb-dot"></span><span class="sdb-fname">${sdbEsc(fname)}</span><span class="sdb-badge">generated</span>`;
+      // Acción opcional: descargar una copia (nunca en el camino principal).
+      const dl = document.createElement('button');
+      dl.className = 'sdb-dl-copy';
+      dl.type = 'button';
+      dl.textContent = 'Download a copy';
+      dl.onclick = () => sdbDownload(blob, fname);
+      it.appendChild(dl);
+      sdb$('sdbResults').appendChild(it);
+      await new Promise(r => setTimeout(r, 110));
     }
-    // Cero persistencia: el blob queda en memoria (dispatchDocs) y de ahí lo toma
-    // el puente para enviar. La descarga a disco es opcional ("Download a copy").
-    builderState.dispatchDocs.push(sdbBuildDispatchDoc(row, blob));
-
-    const it = document.createElement('div');
-    it.className = 'sdb-result-item';
-    it.innerHTML = `<span class="sdb-dot"></span><span class="sdb-fname">${sdbEsc(fname)}</span><span class="sdb-badge">generated</span>`;
-    // Acción opcional: descargar una copia (nunca en el camino principal).
-    const dl = document.createElement('button');
-    dl.className = 'sdb-dl-copy';
-    dl.type = 'button';
-    dl.textContent = 'Download a copy';
-    dl.onclick = () => sdbDownload(blob, fname);
-    it.appendChild(dl);
-    sdb$('sdbResults').appendChild(it);
-    await new Promise(r => setTimeout(r, 110));
+  } finally {
+    document.body.removeChild(rstage);
   }
 
   const done = document.createElement('div');
