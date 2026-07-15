@@ -591,3 +591,52 @@ td { padding:8px 12px; border-bottom:1px solid var(--surface-2); max-width:200px
 .sdb-field-row-edit .del { cursor:pointer; color:var(--error); font-size:14px; line-height:1; padding:0 3px; }
 .sdb-quota { background:var(--bg); border-radius:8px; padding:10px 12px; font-size:11.5px; color:var(--text-muted); margin-top:10px; display:flex; justify-content:space-between; }
 .sdb-pills { margin-left:auto; display:flex; gap:8px; }
+
+/* ============================================
+   SMART DISPATCH — piezas nuevas (signup/token, sendtype, back, col-tray)
+   ============================================ */
+/* Back button */
+.sd-back-btn { background:rgba(255,255,255,.12); color:#fff; border:none; width:28px; height:28px; border-radius:7px; font-size:15px; cursor:pointer; font-family:inherit; line-height:1; }
+.sd-back-btn:hover { background:rgba(255,255,255,.22); }
+
+/* Signup */
+.sd-signup-note { font-size:11.5px; color:var(--text-muted); background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin-top:6px; line-height:1.5; }
+
+/* Token console */
+.sd-token-wrap { max-width:620px; margin:0 auto; }
+.sd-console { background:#0b1020; color:#cde3ff; border-radius:12px; padding:16px 18px; font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.7; min-height:150px; white-space:pre-wrap; word-break:break-word; box-shadow:0 6px 24px rgba(13,31,60,.18); }
+.sd-console .c-req { color:#8be9fd; }
+.sd-console .c-ok { color:#7ee787; }
+.sd-console .c-dim { color:#8792a8; }
+.sd-console .c-key { color:#ffd479; }
+.sd-token-box { background:var(--sig-primary-light); border:1px solid #b8e6e6; border-radius:10px; padding:13px 15px; margin-top:13px; }
+.sd-token-box .lbl { font-size:11px; font-weight:600; color:var(--sig-primary-dark); text-transform:uppercase; letter-spacing:.4px; margin-bottom:5px; }
+.sd-token-box code { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--sig-navy); word-break:break-all; }
+.sd-mail { background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-top:13px; overflow:hidden; }
+.sd-mail-head { background:var(--surface-2); padding:9px 14px; font-size:12px; font-weight:600; color:var(--text-muted); border-bottom:1px solid var(--border); }
+.sd-mail-body { padding:14px; font-size:13px; line-height:1.6; color:var(--text); }
+.sd-mail-body b { color:var(--sig-navy); }
+
+/* Send type */
+.sd-sendtypes { display:flex; flex-direction:column; gap:10px; max-width:560px; margin:0 auto; }
+.sd-sendtype { display:flex; align-items:center; gap:14px; padding:15px 18px; border:2px solid var(--border); border-radius:12px; cursor:pointer; transition:.2s; background:var(--surface); }
+.sd-sendtype:hover { border-color:var(--sig-primary); background:var(--sig-primary-light); }
+.sd-sendtype.sel { border-color:var(--sig-primary); background:var(--sig-primary-light); }
+.sd-sendtype .ic { width:42px; height:42px; border-radius:10px; background:rgba(0,180,182,.12); display:grid; place-items:center; font-size:20px; flex-shrink:0; }
+.sd-sendtype .tx { flex:1; }
+.sd-sendtype .tx h4 { font-size:14px; font-weight:600; color:var(--sig-navy); display:flex; align-items:center; gap:8px; }
+.sd-sendtype .tx p { font-size:12px; color:var(--text-muted); margin-top:2px; }
+.sd-sendtype .sd-radio { width:16px; height:16px; }
+.sd-sendtype.sel .sd-radio { border-color:var(--sig-primary); }
+.sd-sendtype.sel .sd-radio::after { content:""; position:absolute; inset:2.5px; border-radius:50%; background:var(--sig-primary); }
+.sd-rec-tag { font-size:10px; font-weight:700; background:var(--sig-primary); color:#fff; padding:2px 8px; border-radius:20px; }
+.sd-sendtype-note { max-width:560px; margin:14px auto 0; background:var(--warning-bg); border:1px solid #fed7aa; border-radius:8px; padding:11px 13px; font-size:12px; color:#9a3412; line-height:1.5; }
+
+/* Column tray (builder editor) */
+.sdb-col-tray { margin-top:9px; background:var(--bg); border:1px solid var(--border); border-radius:9px; padding:10px 11px; }
+.sdb-col-tray-lbl { font-size:11px; color:var(--text-muted); margin-bottom:7px; }
+.sdb-col-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.sdb-col-chip { font-size:11.5px; font-family:'JetBrains Mono',monospace; background:#eef7ff; color:#2d6ca8; border:1px solid #d5e8f7; padding:4px 9px; border-radius:6px; cursor:grab; user-select:none; transition:.15s; }
+.sdb-col-chip:hover { border-color:var(--sig-primary); background:#dbeeff; }
+.sdb-col-chip:active { cursor:grabbing; }
+.sdb-col-chip.sign { background:#fff0e8; color:var(--sig-orange); border-color:#ffd9c5; }

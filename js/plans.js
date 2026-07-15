@@ -108,23 +108,18 @@ function sdActivate(key, paid) {
   ACC.ia = one ? (key !== 'small') : ((key !== 'starter' && A.ia === 'yes') || key === 'enterprise');
   ACC.oneshot = one;
   ACC.isClient = false;
-  sd$('sdDoneTitle').textContent = paid ? 'Payment confirmed!' : 'Account created!';
-  sd$('sdDoneSub').textContent = one
-    ? `Your ${p.name} is ready. No subscription: use it whenever you want.`
-    : (paid ? `Your ${p.name} subscription is active.` : 'Your Starter plan is active. You can generate documents now.');
-  sd$('sdRecap').innerHTML = `
-    <div class="r"><span>${one ? 'Pack' : 'Plan'}</span><span>${p.name}${ACC.ia ? '<span class="sd-badge-ia">AI</span>' : ''}</span></div>
-    <div class="r"><span>${one ? 'Payment' : 'Billing'}</span><span>${p.price ? p.priceLabel + (one ? ' · one-time' : '/mo') : '—'}</span></div>
-    <div class="r"><span>${one ? 'Documents available' : 'Send limit'}</span><span>${p.limit === Infinity ? 'Unlimited' : p.limit + (one ? '' : '/mo')}</span></div>
-    ${one ? '<div class="r"><span>Renewal</span><span style="color:var(--success)">None</span></div>' : ''}
-    <div class="r"><span>AI layer</span><span style="color:${ACC.ia ? 'var(--success)' : 'var(--text-muted)'}">${ACC.ia ? 'Enabled' : 'Manual mode'}</span></div>`;
-  sdGo('s-done');
+  // El plan quedó elegido; ahora pasa por el alta (crea la cuenta y te da el token).
+  // El plan gratuito también pasa por acá (necesita token igual).
+  sdStartSignup();
 }
 
 /* ===== Entrada al builder: aplica el plan y navega ===== */
 function sdEnterBuilder() {
-  // Pills del header compartido (sd-top)
-  sd$('sdTopRight').innerHTML = `<span class="sd-pill plan">${ACC.plan}</span>` +
-    (ACC.ia ? '<span class="sd-pill ia">AI active</span>' : '<span class="sd-pill">manual mode</span>');
+  // Pills del header compartido (sd-top): plan + IA + tipo de envío
+  const stLabel = (typeof SD_SENDTYPE_LABEL !== 'undefined' && ACC.sendType) ? SD_SENDTYPE_LABEL[ACC.sendType] : null;
+  sd$('sdTopRight').innerHTML =
+    `<span class="sd-pill plan">${ACC.plan}</span>` +
+    (ACC.ia ? '<span class="sd-pill ia">AI active</span>' : '<span class="sd-pill">manual mode</span>') +
+    (stLabel ? `<span class="sd-pill">${stLabel}</span>` : '');
   sdGo('s-builder'); // sdGo llama a sdbOnEnter() para reflejar ACC en el builder
 }

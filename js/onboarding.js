@@ -11,26 +11,69 @@ const sd$ = id => document.getElementById(id);
 /* ===== Estado compartido ===== */
 const A = { product: null, freq: null, vol: null, ia: null, team: null }; // respuestas del chat
 let chosen = null;                                                        // plan/pack elegido
-const ACC = { plan: null, ia: false, limit: Infinity, oneshot: false, isClient: false };
+const ACC = { plan: null, ia: false, limit: Infinity, oneshot: false, isClient: false, sendType: null, token: null, product: null };
 const isOneShot = () => A.freq === 'oneshot' || A.freq === 'sometimes';
+let fromSignup = false; // lo setea signup.js al volver del alta con el token
 
 const CRUMBS = {
-  's-fork': 'Start', 's-client': 'Sign in', 's-quiz': 'Assistant',
-  's-plans': 'Plans', 's-pay': 'Payment', 's-done': 'Confirmation', 's-builder': 'PDF Builder'
+  's-fork': 'Start', 's-client': 'Sign in', 's-quiz': 'Assistant', 's-signup': 'Your details',
+  's-token': 'Your token', 's-plans': 'Plans', 's-pay': 'Payment', 's-done': 'Confirmation',
+  's-sendtype': 'Request type', 's-builder': 'PDF Builder'
 };
 
-/* ===== Navegación ===== */
-function sdGo(id) {
+/* ===== Navegación con historial real (navStack) ===== */
+let navStack = [];
+let currentScreen = 's-fork';
+function sdGo(id, push = true) {
+  if (push && currentScreen && currentScreen !== id) navStack.push(currentScreen);
+  currentScreen = id;
   document.querySelectorAll('.sd-screen').forEach(s => s.classList.remove('on'));
   sd$(id).classList.add('on');
   sd$('sdCrumb').textContent = CRUMBS[id] || '';
+  sd$('sdBack').style.display = navStack.length ? '' : 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (id === 's-quiz' && !sdChatLogEl().children.length) sdAskStep(0);
   if (id === 's-builder' && typeof sdbOnEnter === 'function') sdbOnEnter();
 }
+function goBack() {
+  if (!navStack.length) return;
+  sdGo(navStack.pop(), false);
+}
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Escape' || (e.altKey && e.key === 'ArrowLeft')) && navStack.length) {
+    e.preventDefault();
+    goBack();
+  }
+});
 function sdPickOne(el) {
   el.parentElement.querySelectorAll('.sd-opt').forEach(o => o.classList.remove('sel'));
   el.classList.add('sel');
+}
+
+/* ===== Tipo de envío — REUSA operationType del bulksend (app.js) ===== */
+const SD_SENDTYPE_LABEL = { advanced: 'Advanced signature', simple: 'Simple signature', email: 'Certified email', sms: 'Certified SMS' };
+function sdPickSendType(el) {
+  document.querySelectorAll('#s-sendtype .sd-sendtype').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  operationType = el.dataset.type;   // <- la MISMA global que ya usa el envío
+  ACC.sendType = operationType;
+  sd$('sdSendTypeNext').disabled = false;
+  const note = sd$('sdSendTypeNote');
+  if (operationType === 'sms') {
+    note.style.display = 'block';
+    note.innerHTML = '📱 Certified SMS has no document to build, so it skips the PDF Builder. It goes straight to sending — available once the builder→send bridge is connected.';
+  } else {
+    note.style.display = 'none';
+  }
+}
+function sdContinueSendType() {
+  if (!operationType) return;
+  if (operationType === 'sms') {
+    // SMS no tiene documento → saltea el builder. El envío se conecta con el puente.
+    alert('Certified SMS skips the PDF Builder. Sending will be available when the bridge is connected.');
+    return;
+  }
+  sdEnterBuilder(); // advanced / simple / email → builder
 }
 
 /* ============ CHAT GUIADO ============
@@ -229,15 +272,30 @@ function sdResetChat() {
   sdAskStep(0);
 }
 
-/* ===== Camino "ya soy cliente" ===== */
+/* ===== Confirmación del token (cliente existente O post-alta) ===== */
 function sdEnterAsClient() {
-  ACC.plan = 'Customer'; ACC.ia = true; ACC.limit = Infinity; ACC.isClient = true; ACC.oneshot = false;
-  sd$('sdDoneTitle').textContent = 'Session started';
-  sd$('sdDoneSub').textContent = 'Your token is loaded in this session. It was not stored anywhere.';
-  sd$('sdRecap').innerHTML = `
-    <div class="r"><span>Type</span><span>Existing customer</span></div>
-    <div class="r"><span>Token</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">•••• in memory only</span></div>
-    <div class="r"><span>Persistence</span><span style="color:var(--success)">None</span></div>
-    <div class="r"><span>AI layer</span><span style="color:var(--success)">Enabled</span></div>`;
+  const token = sd$('sdTok').value.trim();
+  if (fromSignup) {
+    // Viene del alta: el plan ya se eligió/pagó → NO resetear. Solo adjuntar token.
+    ACC.token = token;
+    fromSignup = false;
+  } else {
+    // Cliente existente de verdad: cuenta con IA y sin límite.
+    ACC.plan = 'Customer'; ACC.ia = true; ACC.limit = Infinity; ACC.isClient = true; ACC.oneshot = false; ACC.token = token;
+  }
+  sdRenderClientDone();
   sdGo('s-done');
+}
+
+function sdRenderClientDone() {
+  const mask = t => t ? (t.slice(0, 12) + '…') : '••••';
+  sd$('sdDoneTitle').textContent = ACC.isClient ? 'Session started' : 'You\'re all set!';
+  sd$('sdDoneSub').textContent = ACC.isClient
+    ? 'Your token is loaded in this session. It was not stored anywhere.'
+    : `Your ${ACC.plan} account is ready. The token lives only in this session.`;
+  sd$('sdRecap').innerHTML = `
+    <div class="r"><span>${ACC.isClient ? 'Type' : 'Plan'}</span><span>${ACC.isClient ? 'Existing customer' : ACC.plan}${ACC.ia ? '<span class="sd-badge-ia">AI</span>' : ''}</span></div>
+    <div class="r"><span>Token</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${mask(ACC.token)} · in memory</span></div>
+    <div class="r"><span>Persistence</span><span style="color:var(--success)">None</span></div>
+    <div class="r"><span>AI layer</span><span style="color:${ACC.ia ? 'var(--success)' : 'var(--text-muted)'}">${ACC.ia ? 'Enabled' : 'Manual mode'}</span></div>`;
 }

@@ -68,6 +68,7 @@ function sdbOnEnter() {
   detBtn.textContent = acc.ia ? '✨ Detect with AI · coming soon' : '🔒 Detect with AI (Pro plan)';
 
   sdbUpdQuota();
+  sdbSyncColTray();
   sdbCheckReady();
 }
 
@@ -81,6 +82,7 @@ function sdbSetDocMode(m) {
   sdb$('sdbTabWrite').classList.toggle('on', m === 'write');
   sdb$('sdbModeUpload').style.display = m === 'upload' ? '' : 'none';
   sdb$('sdbModeWrite').style.display = m === 'write' ? '' : 'none';
+  if (m === 'write') sdbSyncColTray();
 }
 
 /* ---- Subir archivo (.docx / .txt) ---- */
@@ -233,13 +235,67 @@ function sdbApplyDetected() {
     const name = f.type === 'signature' ? (looksLikeSign(f.guess) ? f.guess : 'sign_' + f.guess) : f.guess;
     txt = txt.slice(0, f.pos) + `{{${name}}}` + txt.slice(f.pos + f.raw.length);
   });
-  // Texto plano → HTML simple, y de acá sigue el pipeline de siempre
+  sdb$('sdbDocEditor').value = txt; // dejamos las {{variables}} visibles en el editor
+  sdbApplyEditorText(txt);
+  sdbNote(`✓ Document ready: <b>${builderState.dataVars.length} data field(s)</b> and <b>${builderState.signAnchors.length} signature(s)</b>. You can cross your data now.`, 'ok');
+}
+
+/* Texto libre (con {{variables}}) → docHtml + pipeline. Reusado por el editor
+   en vivo (drag&drop de columnas) y por la detección por patrones. */
+function sdbApplyEditorText(txt) {
   builderState.docHtml = txt.split(/\n{2,}/).map(p => `<p>${sdbEsc(p).replace(/\n/g, '<br>')}</p>`).join('');
   sdbSplitVars(sdbExtractVars(builderState.docHtml));
   sdbRenderVarChips();
   sdbRenderPreview();
   sdbCheckReady();
-  sdbNote(`✓ Document ready: <b>${builderState.dataVars.length} data field(s)</b> and <b>${builderState.signAnchors.length} signature(s)</b>. You can cross your data now.`, 'ok');
+}
+
+/* Editor en vivo: si ya hay {{variables}} en el texto, actualiza al instante.
+   Si no (texto con ____ / [corchetes]), espera a "Detect by patterns". */
+function sdbEditorLive() {
+  const txt = sdb$('sdbDocEditor').value;
+  if (/\{\{/.test(txt)) sdbApplyEditorText(txt);
+}
+
+/* ---- Bandeja de columnas arrastrables (aparece cuando hay CSV) ---- */
+function sdbSyncColTray() {
+  const tray = sdb$('sdbColTray'), chips = sdb$('sdbColChips');
+  if (!tray) return;
+  const headers = typeof dataHeaders !== 'undefined' ? dataHeaders : [];
+  if (!headers.length) { tray.style.display = 'none'; return; }
+  chips.innerHTML = '';
+  // Chip de ancla de firma (no viene del CSV)
+  const signChip = document.createElement('span');
+  signChip.className = 'sdb-col-chip sign';
+  signChip.textContent = '✍ sign';
+  signChip.draggable = true;
+  signChip.dataset.token = '{{sign}}';
+  chips.appendChild(signChip);
+  // Chips de columnas del CSV
+  headers.forEach(h => {
+    const c = document.createElement('span');
+    c.className = 'sdb-col-chip';
+    c.textContent = h;
+    c.draggable = true;
+    c.dataset.token = `{{${h}}}`;
+    chips.appendChild(c);
+  });
+  chips.querySelectorAll('.sdb-col-chip').forEach(c => {
+    c.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', c.dataset.token));
+    c.addEventListener('click', () => sdbInsertAtCursor(c.dataset.token));
+  });
+  tray.style.display = 'block';
+}
+
+function sdbInsertAtCursor(token) {
+  const ta = sdb$('sdbDocEditor');
+  const s = ta.selectionStart != null ? ta.selectionStart : ta.value.length;
+  const e = ta.selectionEnd != null ? ta.selectionEnd : ta.value.length;
+  ta.value = ta.value.slice(0, s) + token + ta.value.slice(e);
+  const pos = s + token.length;
+  ta.focus();
+  ta.setSelectionRange(pos, pos);
+  sdbEditorLive();
 }
 
 function sdbRenderVarChips() {
@@ -278,6 +334,7 @@ function sdbOnDataLoaded(fileName, format) {
   sdb$('sdbDropDataLabel').innerHTML = `✓ <b>${sdbEsc(fileName)}</b> (${format})<br><span class="sdb-sub">${rows.length} rows · ${headers.length} columns</span>`;
   sdb$('sdbDataInfo').innerHTML = 'Columns: ' + headers.map(h => `<code>${sdbEsc(h)}</code>`).join(' ');
   sdbUpdQuota();
+  sdbSyncColTray();
   sdbRenderPreview();
   sdbCheckReady();
 }
@@ -436,6 +493,7 @@ function sdbInit() {
 
   sdb$('sdbFileDoc').addEventListener('change', e => sdbHandleDoc(e.target.files));
   sdb$('sdbFileData').addEventListener('change', e => sdbHandleData(e.target.files));
+  sdb$('sdbDocEditor').addEventListener('input', sdbEditorLive); // preview en vivo + soltar columnas
 
   sdb$('sdbBrandColor').addEventListener('input', sdbSyncBrand);
   sdb$('sdbBrandHex').addEventListener('input', e => {

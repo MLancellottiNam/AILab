@@ -16,6 +16,7 @@
 
 <!-- ===== ONBOARDING (Smart Dispatch) ===== -->
 <div class="sd-top">
+  <button class="sd-back-btn" id="sdBack" onclick="goBack()" title="Back (Esc)" style="display:none">←</button>
   <div class="sd-logo">SD</div>
   <h1>Smart Dispatch</h1>
   <span class="sd-crumb" id="sdCrumb">Start</span>
@@ -139,6 +140,54 @@
     <div class="sd-nav" style="max-width:460px"><button class="sd-btn ghost" onclick="sdGo('s-plans')">← Choose another plan</button><span></span></div>
   </section>
 
+  <!-- 4b. SIGN UP (new account — simulated API creation) -->
+  <section class="sd-screen" id="s-signup">
+    <div class="sd-hero">
+      <h2>Your details</h2>
+      <p>We create your signature account and hand you back a token. Nothing is stored on our side.</p>
+    </div>
+    <div class="sd-qbox" style="max-width:520px">
+      <div class="sd-field-row">
+        <div class="sd-field"><label>First name</label><input type="text" id="sdSuFirst" value="Marcos"></div>
+        <div class="sd-field"><label>Last name</label><input type="text" id="sdSuLast" value="Lancellotti"></div>
+      </div>
+      <div class="sd-field"><label>Email</label><input type="text" id="sdSuEmail" value="marcos@company.com"></div>
+      <div class="sd-field-row">
+        <div class="sd-field"><label>Company</label><input type="text" id="sdSuCompany" value="Acme Corp"></div>
+        <div class="sd-field"><label>Username</label><input type="text" id="sdSuUser" value="mlancellotti"></div>
+      </div>
+      <div class="sd-field"><label>Phone</label><input type="text" id="sdSuPhone" value="+34 600 000 000"></div>
+      <div class="sd-signup-note">ℹ️ Automatic account creation via API isn't available yet in Signaturit or eSAW. In this demo we simulate the round-trip.</div>
+    </div>
+    <div class="sd-nav">
+      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
+      <button class="sd-btn teal" onclick="sdSubmitSignup()">Create my account →</button>
+    </div>
+  </section>
+
+  <!-- 4c. TOKEN (simulated API response) -->
+  <section class="sd-screen" id="s-token">
+    <div class="sd-hero">
+      <h2>Your token</h2>
+      <p>This is the API round-trip that would happen against your signature provider.</p>
+    </div>
+    <div class="sd-token-wrap">
+      <div class="sd-console" id="sdConsole"></div>
+      <div class="sd-token-box" id="sdTokenBox" style="display:none">
+        <div class="lbl">Generated token (lives only in this session)</div>
+        <code id="sdTokenValue"></code>
+      </div>
+      <div class="sd-mail" id="sdMailPreview" style="display:none">
+        <div class="sd-mail-head">📧 Welcome email preview</div>
+        <div class="sd-mail-body" id="sdMailBody"></div>
+      </div>
+    </div>
+    <div class="sd-nav" style="max-width:620px">
+      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
+      <button class="sd-btn teal" id="sdTokenEnter" onclick="sdFinishSignup()" style="display:none">Enter with this token →</button>
+    </div>
+  </section>
+
   <!-- 5. DONE -->
   <section class="sd-screen" id="s-done">
     <div class="sd-done">
@@ -146,7 +195,42 @@
       <h2 id="sdDoneTitle">All set!</h2>
       <p id="sdDoneSub"></p>
       <div class="sd-recap" id="sdRecap"></div>
-      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdEnterBuilder()">Go to the PDF Builder →</button>
+      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdGo('s-sendtype')">Continue →</button>
+    </div>
+  </section>
+
+  <!-- 5b. SEND TYPE (reusa operationType del bulksend) -->
+  <section class="sd-screen" id="s-sendtype">
+    <div class="sd-hero">
+      <h2>What are you sending?</h2>
+      <p>Pick the request type. It's the same set the bulk sender already supports.</p>
+    </div>
+    <div class="sd-sendtypes">
+      <div class="sd-sendtype" data-type="advanced" onclick="sdPickSendType(this)">
+        <div class="ic">✍️</div>
+        <div class="tx"><h4>Advanced signature <span class="sd-rec-tag">Recommended</span></h4><p>Biometric or digital certificate</p></div>
+        <span class="sd-radio"></span>
+      </div>
+      <div class="sd-sendtype" data-type="simple" onclick="sdPickSendType(this)">
+        <div class="ic">☑️</div>
+        <div class="tx"><h4>Simple signature</h4><p>One-click signing</p></div>
+        <span class="sd-radio"></span>
+      </div>
+      <div class="sd-sendtype" data-type="email" onclick="sdPickSendType(this)">
+        <div class="ic">📧</div>
+        <div class="tx"><h4>Certified email</h4><p>Certify your communications</p></div>
+        <span class="sd-radio"></span>
+      </div>
+      <div class="sd-sendtype" data-type="sms" onclick="sdPickSendType(this)">
+        <div class="ic">💬</div>
+        <div class="tx"><h4>Certified SMS</h4><p>Certify your text messages</p></div>
+        <span class="sd-radio"></span>
+      </div>
+    </div>
+    <div class="sd-sendtype-note" id="sdSendTypeNote" style="display:none"></div>
+    <div class="sd-nav">
+      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
+      <button class="sd-btn teal" id="sdSendTypeNext" disabled onclick="sdContinueSendType()">Continue →</button>
     </div>
   </section>
 
@@ -179,6 +263,10 @@ No special format needed. You can write:
   Signature: ____________
 
 ...and we detect the fields."></textarea>
+            <div class="sdb-col-tray" id="sdbColTray" style="display:none">
+              <div class="sdb-col-tray-lbl">Drag or click a column to insert it as a variable:</div>
+              <div class="sdb-col-chips" id="sdbColChips"></div>
+            </div>
             <div class="sdb-editor-tools">
               <button class="sdb-mini-btn" id="sdbBtnDetectIA" disabled onclick="sdbDetectWithIA()">🔒 Detect with AI</button>
               <button class="sdb-mini-btn" onclick="sdbDetectManual()">Detect by patterns</button>
@@ -577,6 +665,7 @@ No special format needed. You can write:
 <script src="app.js"></script>
 <script src="js/onboarding.js"></script>
 <script src="js/plans.js"></script>
+<script src="js/signup.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/providers/signaturit.js"></script>
 </body>
