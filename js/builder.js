@@ -22,7 +22,8 @@ const builderState = {
   dispatchDocs: [],  // DispatchDoc[] de la última corrida (en memoria)
   detected: [],      // campos detectados en el editor libre
   logoDataUrl: '',   // logo de marca (dataURL en memoria, cero persistencia)
-  brandFooter: ''    // footer de marca (lo deriva extract-brand del brandbook)
+  brandFooter: '',   // footer de marca (lo deriva extract-brand del brandbook)
+  docStyle: 'modern' // estilo del documento: 'modern' | 'sober' | 'classic'
 };
 
 /* ===== Helpers locales ===== */
@@ -637,73 +638,176 @@ function sdbTextOn(hex) {
 }
 
 /* ========================================
-   CONSTRUCTOR ÚNICO DEL DOCUMENTO (WYSIWYG: preview === PDF)
-   Header con logo + fecha, cuerpo redactado, bloque de firma estilizado, footer.
+   CONSTRUCTOR DEL DOCUMENTO (WYSIWYG: preview === PDF)
+   Tres estilos elegibles (Modern / Sober / Classic). Todos comparten el mismo
+   contenido (cuerpo redactado + variables + anclas) y se parametrizan con la
+   marca (color, tipografía, logo, footer). El estilo se elige en la card Brand
+   y controla el chrome (header/hero, tipografía, footer) y el bloque de firma.
    ======================================== */
-function sdbBuildDocEl(row, idx) {
-  const rows = typeof dataRows !== 'undefined' ? dataRows : [];
-  const title = sdb$('sdbDocTitle').value || 'Document';
-  const font = sdb$('sdbBrandFont').value;
-  const brand = sdb$('sdbBrandColor').value;
-  const onBrand = sdbTextOn(brand);
-  const dateStr = sdbIssueDate();
-  const reveal = sdb$('sdbRevealAnchors') && sdb$('sdbRevealAnchors').checked;
-  const nameKey = (typeof dataHeaders !== 'undefined' ? dataHeaders : []).find(h => /nombre|name|cliente/i.test(h));
-  const recipient = (nameKey && row && row[nameKey]) ? String(row[nameKey]) : '';
-  const total = rows.length;
+const SDB_MONO = "'IBM Plex Mono',monospace";
+const SDB_ACCENT = '#FF6B35'; // acento cálido (paleta Namirial) para el estilo Modern
 
+/* Contexto común que consumen las tres plantillas. */
+function sdbDocCtx(row, idx) {
+  const rows = typeof dataRows !== 'undefined' ? dataRows : [];
+  const nameKey = (typeof dataHeaders !== 'undefined' ? dataHeaders : []).find(h => /nombre|name|cliente/i.test(h));
+  const title = sdb$('sdbDocTitle').value || 'Document';
+  return {
+    row, idx,
+    title,
+    font: sdb$('sdbBrandFont').value,
+    brand: sdb$('sdbBrandColor').value,
+    onBrand: sdbTextOn(sdb$('sdbBrandColor').value),
+    dateStr: sdbIssueDate(),
+    reveal: sdb$('sdbRevealAnchors') && sdb$('sdbRevealAnchors').checked,
+    recipient: (nameKey && row && row[nameKey]) ? String(row[nameKey]) : '',
+    docRef: row ? `Recipient ${idx + 1}${rows.length ? ' / ' + rows.length : ''}` : 'Sample · placeholders',
+    logo: builderState.logoDataUrl
+      ? `<img src="${builderState.logoDataUrl}" alt="logo" style="height:42px;width:auto;max-width:180px;object-fit:contain;display:block">`
+      : '',
+    footer: sdbEsc(builderState.brandFooter || title),
+    body: sdbFillTemplate(builderState.docHtml, row)
+  };
+}
+
+function sdbPageEl(cssText) {
   const page = document.createElement('div');
   page.className = 'sdb-page';
-  page.style.cssText = `font-family:${font};color:#1a2332;background:#fff;width:794px;box-sizing:border-box;font-size:13.5px;line-height:1.75`;
+  page.style.cssText = 'width:794px;box-sizing:border-box;background:#fff;color:#1a2332;' + cssText;
+  return page;
+}
 
-  const logo = builderState.logoDataUrl
-    ? `<img src="${builderState.logoDataUrl}" alt="logo" style="height:46px;width:auto;max-width:200px;object-fit:contain;display:block">`
-    : '';
-
+/* ---- Estilo CLASSIC: header de marca + cuerpo + footer (el original) ---- */
+function sdbTplClassic(c) {
+  const page = sdbPageEl(`font-family:${c.font};font-size:13.5px;line-height:1.75`);
   page.innerHTML = `
-    <div style="background:${brand};color:${onBrand};padding:24px 48px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <div style="background:${c.brand};color:${c.onBrand};padding:24px 48px;display:flex;align-items:center;justify-content:space-between;gap:16px">
       <div style="display:flex;align-items:center;gap:16px;min-width:0">
-        ${logo}
-        <div style="font-size:22px;font-weight:800;letter-spacing:.2px">${sdbEsc(title)}</div>
+        ${c.logo}
+        <div style="font-size:22px;font-weight:800;letter-spacing:.2px">${sdbEsc(c.title)}</div>
       </div>
-      <div style="text-align:right;font-size:11px;line-height:1.5;font-family:monospace;opacity:.92;white-space:nowrap">
-        <div>${sdbEsc(dateStr)}</div>
-        <div>${row ? `Recipient ${idx + 1}${total ? ' / ' + total : ''}` : 'Sample · placeholders'}</div>
+      <div style="text-align:right;font-size:11px;line-height:1.5;font-family:${SDB_MONO};opacity:.92;white-space:nowrap">
+        <div>${sdbEsc(c.dateStr)}</div><div>${sdbEsc(c.docRef)}</div>
       </div>
     </div>
-    <div class="sdb-body" style="padding:34px 48px 40px">
-      ${sdbFillTemplate(builderState.docHtml, row)}
-    </div>
-    <div style="border-top:1px solid #e6e9ef;margin:0 48px;padding:14px 0 20px;font-size:10px;color:#9aa4b2;display:flex;justify-content:space-between;gap:16px;font-family:monospace">
-      <span>${sdbEsc(builderState.brandFooter || title)}</span><span style="white-space:nowrap">Generated with Namirial Dispatch</span>
+    <div class="sdb-body" style="padding:34px 48px 40px">${c.body}</div>
+    <div style="border-top:1px solid #e6e9ef;margin:0 48px;padding:14px 0 20px;font-size:10px;color:#9aa4b2;display:flex;justify-content:space-between;gap:16px;font-family:${SDB_MONO}">
+      <span>${c.footer}</span><span style="white-space:nowrap">Generated with Namirial Dispatch</span>
     </div>`;
+  return page;
+}
+
+/* ---- Estilo SOBER: editorial, serif, versalitas, footer fino ---- */
+function sdbTplSober(c) {
+  const serif = "'Playfair Display',Georgia,serif";
+  const gold = '#94764a';
+  const left = c.logo || (builderState.brandFooter ? `<div style="font-family:${serif};font-size:20px;font-weight:700">${c.footer}</div>` : '');
+  const page = sdbPageEl(`font-family:${c.font};font-size:13.5px;line-height:1.75`);
+  page.innerHTML = `
+    <div style="padding:42px 54px 0">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a2332;padding-bottom:14px;gap:16px">
+        <div style="min-width:0">${left}</div>
+        <div style="text-align:right;font-family:${SDB_MONO};font-size:11px;white-space:nowrap">
+          <div style="letter-spacing:.14em;text-transform:uppercase;font-size:10px;color:${gold}">${sdbEsc(c.dateStr)}</div>
+          <div style="color:#1a2332">${sdbEsc(c.docRef)}</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-family:${serif};margin:30px 0 6px;font-size:24px;font-weight:700">${sdbEsc(c.title)}</div>
+      <div style="text-align:center;letter-spacing:.14em;text-transform:uppercase;color:${gold};font-size:10px;margin-bottom:24px">${c.recipient ? sdbEsc(c.recipient) : '&nbsp;'}</div>
+      <div class="sdb-body" style="color:#333e4d">${c.body}</div>
+    </div>
+    <div style="margin-top:32px;border-top:1px solid #e6e0d5;padding:12px 54px;font-family:${SDB_MONO};font-size:9.5px;color:#b8a074;display:flex;justify-content:space-between;gap:16px">
+      <span>${c.footer}</span><span style="white-space:nowrap">Generated with Namirial Dispatch</span>
+    </div>`;
+  return page;
+}
+
+/* ---- Estilo MODERN: hero de marca con círculos, cuerpo, footer navy ---- */
+function sdbTplModern(c) {
+  const page = sdbPageEl(`font-family:${c.font};font-size:13px;line-height:1.65`);
+  page.innerHTML = `
+    <div style="position:relative;background:${c.brand};color:${c.onBrand};padding:30px 46px 34px;overflow:hidden">
+      <div style="position:absolute;top:-70px;right:-50px;width:250px;height:250px;border-radius:50%;background:rgba(255,255,255,.08)"></div>
+      <div style="position:absolute;bottom:-120px;right:70px;width:210px;height:210px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
+      <div style="position:relative;display:flex;justify-content:space-between;align-items:center;gap:16px">
+        <div style="min-width:0">${c.logo}</div>
+        <div style="border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:4px 13px;font-family:${SDB_MONO};font-size:11px;white-space:nowrap">${sdbEsc(c.dateStr)}</div>
+      </div>
+      <div style="position:relative;margin-top:22px">
+        <div style="font-size:28px;font-weight:800;line-height:1.1">${sdbEsc(c.title)}</div>
+        ${c.recipient ? `<div style="margin-top:8px;font-size:12.5px;opacity:.85">${sdbEsc(c.recipient)} · ${sdbEsc(c.docRef)}</div>` : ''}
+      </div>
+    </div>
+    <div class="sdb-body" style="padding:28px 46px 34px;color:#3a4552">${c.body}</div>
+    <div style="background:#0d1f3c;color:#fff;padding:14px 46px;display:flex;justify-content:space-between;gap:16px;font-size:11px">
+      <span>${c.footer}</span><span style="opacity:.8;white-space:nowrap">Generated with Namirial Dispatch</span>
+    </div>`;
+  return page;
+}
+
+const SDB_TPL = { classic: sdbTplClassic, sober: sdbTplSober, modern: sdbTplModern };
+
+function sdbBuildDocEl(row, idx) {
+  const c = sdbDocCtx(row, idx);
+  const style = builderState.docStyle || 'modern';
+  const page = (SDB_TPL[style] || sdbTplClassic)(c);
 
   // Espaciado de párrafos (por si el CSS de la hoja no aplica en el PDF).
   page.querySelectorAll('.sdb-body p').forEach(p => { p.style.margin = '0 0 12px'; });
 
-  // Bloque de firma estilizado: donde el redactor puso el ancla, dibujamos una
-  // línea con caption. El texto del ancla queda invisible (para el envío) salvo
-  // que "reveal" esté activo. (Nota: el PDF de html2canvas es imagen; la extracción
-  // del ancla como texto la resuelve el puente de envío — pendiente aparte.)
+  // Bloque de firma estilizado por estilo. El texto del ancla queda invisible
+  // (para el envío) salvo que "reveal" esté activo. (El PDF de html2canvas es
+  // imagen; la extracción del ancla como texto la resuelve el puente — aparte.)
   page.querySelectorAll('.sdb-sign-anchor').forEach(a => {
     const anchorText = a.getAttribute('data-anchor') || a.textContent || 'sign';
-    const wrap = document.createElement('span');
-    wrap.style.cssText = 'display:inline-block;text-align:center;margin:8px 4px 2px;vertical-align:bottom';
-    const line = document.createElement('span');
-    line.style.cssText = 'display:block;min-width:250px;border-bottom:1.6px solid #1a2332;height:30px;line-height:30px';
-    const inner = document.createElement('span');
-    inner.textContent = anchorText;
-    inner.style.cssText = reveal ? `color:${brand};font-size:11px;font-family:monospace` : 'color:transparent;font-size:1px';
-    line.appendChild(inner);
-    const cap = document.createElement('span');
-    cap.style.cssText = 'display:block;font-size:10px;color:#5f6b7a;margin-top:5px;font-family:monospace';
-    cap.textContent = `Signature${recipient ? ' · ' + recipient : ''} · ${dateStr}`;
-    wrap.appendChild(line);
-    wrap.appendChild(cap);
-    a.replaceWith(wrap);
+    a.replaceWith(sdbSignatureBlock(anchorText, c, style));
   });
 
   return page;
+}
+
+/* Bloque de firma: tarjeta punteada (Modern) o línea con caption (Sober/Classic). */
+function sdbSignatureBlock(anchorText, c, style) {
+  const wrap = document.createElement('span');
+  const inner = document.createElement('span');
+  inner.textContent = anchorText;
+  inner.style.cssText = c.reveal ? `color:${c.brand};font-size:11px;font-family:${SDB_MONO}` : 'color:transparent;font-size:1px';
+
+  if (style === 'modern') {
+    wrap.style.cssText = `display:inline-block;vertical-align:bottom;margin:10px 6px 4px;min-width:250px;border:1.4px dashed ${c.brand};border-radius:10px;padding:11px 15px 13px`;
+    const lbl = document.createElement('span');
+    lbl.style.cssText = `display:block;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#8a94a2;font-family:${SDB_MONO}`;
+    lbl.textContent = 'Signature';
+    const gap = document.createElement('span');
+    gap.style.cssText = 'display:block;height:22px';
+    gap.appendChild(inner);
+    const cap = document.createElement('span');
+    cap.style.cssText = 'display:block;font-weight:700;font-size:12px;margin-top:2px';
+    cap.textContent = c.recipient || '';
+    wrap.appendChild(lbl); wrap.appendChild(gap); wrap.appendChild(cap);
+    return wrap;
+  }
+
+  // Sober / Classic: línea con caption.
+  wrap.style.cssText = 'display:inline-block;text-align:center;margin:8px 4px 2px;vertical-align:bottom';
+  const line = document.createElement('span');
+  line.style.cssText = 'display:block;min-width:250px;border-bottom:1.6px solid #1a2332;height:30px;line-height:30px';
+  line.appendChild(inner);
+  const cap = document.createElement('span');
+  cap.style.cssText = `display:block;font-size:10px;color:#5f6b7a;margin-top:5px;font-family:${SDB_MONO}`;
+  cap.textContent = `Signature${c.recipient ? ' · ' + c.recipient : ''} · ${c.dateStr}`;
+  wrap.appendChild(line); wrap.appendChild(cap);
+  return wrap;
+}
+
+/* Cambiar el estilo del documento (selector de la card Brand) → re-render. */
+function sdbSetStyle(style) {
+  if (!SDB_TPL[style]) return;
+  builderState.docStyle = style;
+  document.querySelectorAll('#sdbStylePicker .sdb-style-opt').forEach(b => {
+    b.classList.toggle('sel', b.dataset.style === style);
+  });
+  sdbRenderPreview();
 }
 
 function sdbRenderPreview() {

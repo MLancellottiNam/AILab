@@ -14,11 +14,11 @@ let signupProduct = 'signaturit';
 function sdCurrentProduct() { return A.product === 'esaw' ? 'esaw' : 'signaturit'; }
 
 /* Simulación del alta. TODO(alta real): reemplazar por fetch a la Edge Function
-   'create-account' que llama a la API del producto y devuelve el api_token. */
+   'create-account' que llama a la API del producto y devuelve el api_token.
+   Para la demo devolvemos el token de PREPRODUCCIÓN de Signaturit (mismo que
+   usa el cliente existente), así el envío funciona de punta a punta. */
 function createAccount(data, product) {
-  const prefix = product === 'esaw' ? 'esaw_live_' : 'sig_live_';
-  const rand = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
-  return { token: prefix + rand, product };
+  return { token: SIG_PREPROD_TOKEN, product };
 }
 
 function sdStartSignup() { sdGo('s-signup'); }

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Namirial Dispatch</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2317A398'/><text x='50' y='68' font-size='40' font-weight='800' fill='%230B0E11' text-anchor='middle' font-family='Arial'>ND</text></svg>">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -68,7 +68,7 @@
       </div>
       <div class="sd-field" style="margin-top:15px">
         <label data-i18n="client.tokenLabel">API token</label>
-        <input type="password" id="sdTok" value="demo_token_not_stored">
+        <input type="password" id="sdTok" value="XaGXALJHVNrksuUxLGplRrmByBHTNiEVwUXECDzRPyInxbbNAkgvBYPDaXFCOGgjsTgebxpCjHFxpVdxaXaKKc">
       </div>
       <div class="sd-chat-hint" data-i18n="client.tokenHint">🔒 The token travels in each request header and is discarded. It never touches disk or a database.</div>
     </div>
@@ -359,6 +359,14 @@
               <option value="Arial,sans-serif">Arial (sans)</option>
             </select>
           </div>
+          <div class="sdb-row sdb-row-style">
+            <label>Style</label>
+            <div class="sdb-style-picker" id="sdbStylePicker">
+              <button type="button" class="sdb-style-opt sel" data-style="modern" onclick="sdbSetStyle('modern')">Modern</button>
+              <button type="button" class="sdb-style-opt" data-style="sober" onclick="sdbSetStyle('sober')">Sober</button>
+              <button type="button" class="sdb-style-opt" data-style="classic" onclick="sdbSetStyle('classic')">Classic</button>
+            </div>
+          </div>
           <div class="sdb-iabox locked" id="sdbIaBox">
             <div class="sdb-iahead"><span>✨</span> <span id="sdbIaTitle">AI layer</span></div>
             <p id="sdbIaDesc">Upload your brand book and the AI extracts colors and typography automatically.</p>
@@ -487,7 +495,7 @@
         <div class="config-grid" id="setup-creds">
           <!-- Selector temporal — lo reemplaza el onboarding conversacional cuando esté armado (ver CLAUDE.md) -->
           <div class="config-card"><label>Provider</label><select id="cfg-provider"><option value="signaturit">Signaturit</option><option value="esaw">eSAW (eSignAnyWhere)</option></select></div>
-          <div class="config-card"><label>Environment <span class="req">*</span></label><select id="cfg-env"><option value="https://api.signaturit.com">Production</option><option value="https://api.sandbox.signaturit.com">Sandbox</option></select></div>
+          <div class="config-card"><label>Environment <span class="req">*</span></label><select id="cfg-env"><option value="https://api.sandbox.signaturit.com" selected>Sandbox (preproduction)</option><option value="https://api.signaturit.com">Production</option></select></div>
           <div class="config-card"><label>API token <span class="req">*</span></label><input type="password" id="cfg-token" placeholder="Paste your token here"></div>
         </div>
 

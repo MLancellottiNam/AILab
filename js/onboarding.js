@@ -12,6 +12,12 @@ const sd$ = id => document.getElementById(id);
 const A = { sigType: null, product: null, freq: null, vol: null, ia: null, team: null }; // respuestas del chat (product se DERIVA de sigType)
 let chosen = null;                                                        // plan/pack elegido
 const ACC = { plan: null, ia: false, limit: Infinity, oneshot: false, isClient: false, sendType: null, token: null, product: null };
+
+/* Token de PREPRODUCCIÓN de Signaturit para la demo: se usa en TODOS los caminos
+   (cliente nuevo tras el alta y usuario que ya tiene token). El entorno de envío
+   por defecto es Sandbox. NOTA: es un token de preprod para el demo, no de
+   producción; sigue viajando por header y no se persiste. */
+const SIG_PREPROD_TOKEN = 'XaGXALJHVNrksuUxLGplRrmByBHTNiEVwUXECDzRPyInxbbNAkgvBYPDaXFCOGgjsTgebxpCjHFxpVdxaXaKKc';
 const isOneShot = () => A.freq === 'oneshot' || A.freq === 'sometimes';
 let fromSignup = false; // lo setea signup.js al volver del alta con el token
 
@@ -376,3 +382,7 @@ function sdRenderClientDone() {
     <div class="r"><span>${t('recap.persistence')}</span><span style="color:var(--success)">${t('recap.none')}</span></div>
     <div class="r"><span>${t('recap.aiLayer')}</span><span style="color:${ACC.ia ? 'var(--success)' : 'var(--text-muted)'}">${ACC.ia ? t('recap.enabled') : t('recap.manual')}</span></div>`;
 }
+
+/* Prefill del token de preprod en el campo del cliente existente (misma fuente
+   que usa el alta). Los scripts van al final del <body>, así que el DOM ya existe. */
+if (typeof sd$ === 'function' && sd$('sdTok')) sd$('sdTok').value = SIG_PREPROD_TOKEN;
