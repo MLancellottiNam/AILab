@@ -34,46 +34,68 @@ function sdSubmitSignup() {
   };
   signupProduct = sdCurrentProduct();
   sdGo('s-token');
-  sdRunTokenConsole(data, signupProduct);
+  sdRunSetupProgress(data, signupProduct);
 }
 
-/* Consola tipo terminal: muestra el POST y la respuesta línea por línea */
-function sdRunTokenConsole(data, product) {
+/* Animación de progreso: pasos secuenciales (spinner → check) + barra que se
+   llena en ~5s, y recién al final revela el token. Reemplaza a la consola
+   tipo terminal (decisión de Marcos, 2026-07). El alta sigue simulada:
+   createAccount() se resuelve al instante, la demora es puramente de UX. */
+function sdRunSetupProgress(data, product) {
   const isEsaw = product === 'esaw';
   const productName = isEsaw ? 'eSignAnywhere' : 'Signaturit';
-  const endpoint = isEsaw ? 'POST /api/v4/account' : 'POST /v3/accounts';
-  const con = sd$('sdConsole');
-  con.innerHTML = '';
+  const planName = ACC.plan || 'Starter';
+  const isFree = /starter/i.test(planName) || ACC.oneshot === false && ACC.plan == null;
+
+  const wrap = sd$('sdSetup');
   sd$('sdTokenBox').style.display = 'none';
   sd$('sdMailPreview').style.display = 'none';
   sd$('sdTokenEnter').style.display = 'none';
 
+  // El token se genera ya (la demora es visual), pero se revela al final.
   const acct = createAccount(data, product);
   signupToken = acct.token;
 
-  const body = JSON.stringify({
-    first_name: data.first_name, last_name: data.last_name,
-    email: data.email, company: data.company, username: data.username, phone: data.phone
-  }, null, 2);
-
-  const lines = [
-    { html: `<span class="c-req">${endpoint}</span>  <span class="c-dim">Host: api.${isEsaw ? 'esignanywhere' : 'signaturit'}.com</span>`, d: 250 },
-    { html: `<span class="c-dim">${sdEscConsole(body)}</span>`, d: 500 },
-    { html: `<span class="c-dim">${t('signup.creating')}</span>`, d: 900 },
-    { html: `<span class="c-ok">← 201 Created</span>`, d: 500 },
-    { html: `{ "api_token": "<span class="c-key">${acct.token}</span>", "status": "active" }`, d: 400 },
-    { html: `<span class="c-dim">${t('signup.sendingMail', { email: sdEscConsole(data.email) })}</span>`, d: 450 }
+  // Pasos de la puesta en marcha. El de pago cambia según sea plan gratis o no.
+  const steps = [
+    { label: t('setup.connecting', { product: productName }) },
+    { label: t('setup.creating') },
+    { label: isFree ? t('setup.paymentFree', { plan: planName })
+                    : t('setup.payment', { plan: planName }) },
+    { label: t('setup.workspace') },
+    { label: t('setup.issuing') },
+    { label: t('setup.email') }
   ];
 
+  // Markup: barra de progreso + lista de pasos.
+  wrap.innerHTML = `
+    <div class="sd-setup-bar"><span class="sd-setup-fill" id="sdSetupFill"></span></div>
+    <div class="sd-setup-steps">
+      ${steps.map((s, i) => `
+        <div class="sd-setup-step" data-i="${i}">
+          <span class="sd-setup-ic"></span>
+          <span class="sd-setup-lbl">${sdEscConsole(s.label)}</span>
+        </div>`).join('')}
+    </div>`;
+
+  const fill = sd$('sdSetupFill');
+  const rows = [...wrap.querySelectorAll('.sd-setup-step')];
+  const per = 820; // ms por paso → ~4.9s en total
+
   let i = 0;
-  const step = () => {
-    if (i >= lines.length) return sdRevealToken(data, product, productName);
-    con.innerHTML += (con.innerHTML ? '\n' : '') + lines[i].html;
-    con.scrollTop = con.scrollHeight;
-    const d = lines[i].d; i++;
-    setTimeout(step, d);
+  const run = () => {
+    // cerrar el paso anterior como completado
+    if (i > 0) rows[i - 1].classList.replace('active', 'done');
+    if (i >= steps.length) {
+      fill.style.width = '100%';
+      return setTimeout(() => sdRevealToken(data, product, productName), 350);
+    }
+    rows[i].classList.add('active');
+    fill.style.width = Math.round(((i + 1) / steps.length) * 100) + '%';
+    i++;
+    setTimeout(run, per);
   };
-  step();
+  run();
 }
 
 function sdRevealToken(data, product, productName) {
