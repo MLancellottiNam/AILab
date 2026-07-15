@@ -240,6 +240,29 @@
     </div>
   </section>
 
+  <!-- 5c. DOC SOURCE — crear con IA o traer PDF propio (antes del builder) -->
+  <section class="sd-screen" id="s-docsource">
+    <div class="sd-hero">
+      <h2 data-i18n="docsource.title">How do you want your document?</h2>
+      <p data-i18n="docsource.lead">Build it from your data with our AI, or bring a PDF you already have. Either way, we'll send it for signature.</p>
+    </div>
+    <div class="sd-fork">
+      <div class="sd-fork-card" onclick="sdEnterBuilder()">
+        <div class="ic" style="background:rgba(79,70,229,.16);color:var(--ai-text)">✨</div>
+        <h3 data-i18n="docsource.ai.title">Create a PDF with Namirial AI</h3>
+        <p data-i18n="docsource.ai.desc">Start from your data and a short brief. The AI drafts the document, you brand it, and we generate one signed-ready PDF per recipient.</p>
+        <div class="cta" data-i18n="docsource.ai.cta">Build with AI →</div>
+      </div>
+      <div class="sd-fork-card" onclick="sdEnterOwnPdf()">
+        <div class="ic" style="background:var(--sig-primary-light);color:var(--sig-primary-dark)">📄</div>
+        <h3 data-i18n="docsource.own.title">I already have my PDF</h3>
+        <p data-i18n="docsource.own.desc">Upload your own PDF(s) and a recipient list. We map the columns and send them for signature — no document generation.</p>
+        <div class="cta" data-i18n="docsource.own.cta">Upload and send →</div>
+      </div>
+    </div>
+    <div class="sd-nav"><button class="sd-btn ghost" onclick="goBack()" data-i18n="common.back">← Back</button><span></span></div>
+  </section>
+
   <!-- 6. PDF BUILDER (dentro del mismo flujo) -->
   <section class="sd-screen" id="s-builder">
     <div class="sdb-grid">

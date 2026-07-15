@@ -96,7 +96,7 @@ function sdContinueSendType() {
     alert(t('sendtype.smsAlert'));
     return;
   }
-  sdEnterBuilder(); // advanced / simple / email → builder
+  sdGo('s-docsource'); // advanced / simple / email → elegir origen del documento
 }
 
 /* Continuar desde s-done. El usuario nuevo ya eligió el tipo de firma en el chat
@@ -108,7 +108,7 @@ function sdAfterDone() {
       alert(t('sendtype.smsAlert'));
       return;
     }
-    sdEnterBuilder();
+    sdGo('s-docsource');   // elegir: crear con IA o traer PDF propio
   } else {
     sdGo('s-sendtype');
   }

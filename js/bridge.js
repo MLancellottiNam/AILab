@@ -98,6 +98,38 @@ function sdbBridgeToSend() {
   }
 }
 
+/* Camino "ya tengo mi PDF": el usuario NO usa el builder. Abrimos el flujo
+   NATIVO del bulksend (Config → Archivos → Mapeo → Envío) para que suba su(s)
+   PDF(s) + lista de destinatarios y los mande a firmar. Sin puente: el mapeo y
+   la preview nativos hacen el matching (por eso __sdBridge.active = false). */
+function sdbEnterOwnPdf() {
+  window.__sdBridge.active = false;
+
+  // Estado de envío limpio (el usuario carga lo suyo desde cero).
+  pdfFiles = {}; matchedData = []; sendLog = [];
+  dataRows = []; dataHeaders = [];
+  useTemplate = false;
+  const tplToggle = document.getElementById('toggle-template');
+  if (tplToggle) tplToggle.checked = false;
+
+  operationType = sdbBridgeOperation();
+  const provSel = document.getElementById('cfg-provider');
+  if (provSel) provSel.value = (typeof ACC !== 'undefined' && (ACC.product === 'esaw' || ACC.provider === 'esaw')) ? 'esaw' : 'signaturit';
+
+  document.querySelectorAll('.sd-top, .sd-wrap').forEach(el => { el.style.display = 'none'; });
+  const overlay = document.getElementById('launcherOverlay');
+  if (overlay) overlay.classList.add('hidden');
+  const wrap = document.getElementById('appWrapper');
+  if (wrap) wrap.classList.add('active');
+  const badge = document.getElementById('badgeOperation');
+  if (badge && typeof OPERATION_LABELS !== 'undefined') badge.textContent = OPERATION_LABELS[operationType] || '';
+  if (typeof setupBulkMode === 'function') setupBulkMode();
+  if (typeof goToStep === 'function') goToStep(1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+// Alias usado por la pantalla de elección (s-docsource).
+window.sdEnterOwnPdf = sdbEnterOwnPdf;
+
 // Salir del envío y volver al builder (por si el usuario quiere retocar).
 function sdbBridgeBackToBuilder() {
   window.__sdBridge.active = false;
