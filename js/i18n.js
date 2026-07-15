@@ -17,7 +17,9 @@
 const SD_LANG = (function () {
   const ov = (typeof localStorage !== 'undefined') && localStorage.getItem('SD_LANG');
   if (ov === 'es' || ov === 'en') return ov;
-  return 'en'; // UI en inglés por defecto (decisión de Marcos). ES sigue disponible vía override.
+  // Onboarding: autodetecta el idioma del navegador (es* → español, resto → inglés),
+  // como pidió Hernán. El wizard de envío y el builder (Marcos) quedan en inglés fijo.
+  return (typeof navigator !== 'undefined' && /^es/i.test(navigator.language || '')) ? 'es' : 'en';
 })();
 
 const I18N = {
