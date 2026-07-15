@@ -121,6 +121,7 @@ async function fetchTemplates() {
    ======================================== */
 
 function setupBulkMode() {
+  if (typeof sdRenderUsagePill === 'function') sdRenderUsagePill(); // saldo en el header del envío
   const isSMS = operationType === 'sms';
   const isEmail = operationType === 'email';
   document.getElementById('pdfUploadSection').style.display = isSMS ? 'none' : 'block';
@@ -1168,6 +1169,10 @@ async function startBulkSend() {
   log(`Completed in ${elapsed}s — ${ok} sent, ${err} errors — Success rate: ${rate}%`, 'done', 'summary');
   updateLiveStats();
   renderResults(isSMS);
+
+  // Consumo: se descuenta AL ENVIAR (cada envío disparado = 1 crédito) y refresca
+  // el saldo del header. Cero persistencia: vive en ACC (memoria).
+  if (typeof sdUsageConsume === 'function') sdUsageConsume(ok);
 }
 
 function stopSending() { sending = false; }

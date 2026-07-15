@@ -11,7 +11,7 @@ const sd$ = id => document.getElementById(id);
 /* ===== Estado compartido ===== */
 const A = { sigType: null, product: null, freq: null, vol: null, ia: null, team: null }; // respuestas del chat (product se DERIVA de sigType)
 let chosen = null;                                                        // plan/pack elegido
-const ACC = { plan: null, ia: false, limit: Infinity, oneshot: false, isClient: false, sendType: null, token: null, product: null };
+const ACC = { plan: null, ia: false, limit: Infinity, oneshot: false, isClient: false, sendType: null, token: null, product: null, used: 0 };
 
 /* Token de PREPRODUCCIÓN de Signaturit para la demo: se usa en TODOS los caminos
    (cliente nuevo tras el alta y usuario que ya tiene token). El entorno de envío
@@ -35,6 +35,7 @@ function sdGo(id, push = true) {
   if (id === 's-quiz' && !sdChatLogEl().children.length) sdAskStep(0);
   if (id === 's-provider') sdSyncProviderPreselect();
   if (id === 's-builder' && typeof sdbOnEnter === 'function') sdbOnEnter();
+  if (typeof sdRenderUsagePill === 'function') sdRenderUsagePill(); // saldo en el header (una vez con token)
 }
 function goBack() {
   if (!navStack.length) return;
