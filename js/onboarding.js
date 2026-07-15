@@ -9,7 +9,7 @@
 const sd$ = id => document.getElementById(id);
 
 /* ===== Estado compartido ===== */
-const A = { product: null, freq: null, vol: null, ia: null, team: null }; // respuestas del chat
+const A = { sigType: null, product: null, freq: null, vol: null, ia: null, team: null }; // respuestas del chat (product se DERIVA de sigType)
 let chosen = null;                                                        // plan/pack elegido
 const ACC = { plan: null, ia: false, limit: Infinity, oneshot: false, isClient: false, sendType: null, token: null, product: null };
 const isOneShot = () => A.freq === 'oneshot' || A.freq === 'sometimes';
@@ -52,6 +52,13 @@ function sdPickOne(el) {
 
 /* ===== Tipo de envío — REUSA operationType del bulksend (app.js) ===== */
 const SD_SENDTYPE_LABEL = { advanced: 'Advanced signature', simple: 'Simple signature', email: 'Certified email', sms: 'Certified SMS' };
+
+/* ===== Tipo de firma → proveedor (selección AUTOMÁTICA, camino "quiero empezar") =====
+   El usuario NO elige el proveedor: lo decide el tipo de firma. La firma avanzada
+   (el nivel más alto) va a eSAW (fuerte en firma de alta garantía); el resto a
+   Signaturit (arranque más directo). Ver decisión de diseño en CLAUDE.md §6. */
+const SIG_TYPE_PROVIDER = { advanced: 'esaw', simple: 'signaturit', email: 'signaturit', sms: 'signaturit' };
+const PROVIDER_NAME = { signaturit: 'Signaturit', esaw: 'eSignAnywhere' };
 function sdPickSendType(el) {
   document.querySelectorAll('#s-sendtype .sd-sendtype').forEach(o => o.classList.remove('sel'));
   el.classList.add('sel');
@@ -76,23 +83,40 @@ function sdContinueSendType() {
   sdEnterBuilder(); // advanced / simple / email → builder
 }
 
+/* Continuar desde s-done. El usuario nuevo ya eligió el tipo de firma en el chat
+   (operationType ya está seteado) → va directo al builder, sin volver a preguntar
+   en s-sendtype. El cliente existente no pasó por el chat → elige el tipo ahí. */
+function sdAfterDone() {
+  if (operationType) {
+    if (operationType === 'sms') {
+      alert('Certified SMS skips the PDF Builder. Sending will be available when the bridge is connected.');
+      return;
+    }
+    sdEnterBuilder();
+  } else {
+    sdGo('s-sendtype');
+  }
+}
+
 /* ============ CHAT GUIADO ============
    El camino por detrás siempre es Signaturit. El chat educa mientras clasifica. */
 const FLOW = [
   {
-    key: 'product',
-    bot: 'Hi! I\'m the Smart Dispatch assistant 👋<br><br>I\'ll help you build the plan that fits you. First: <b>which signature product will you use to send your documents?</b>',
+    key: 'sigType',
+    bot: 'Hi! I\'m the Smart Dispatch assistant 👋<br><br>I\'ll help you find the plan that fits you. First: <b>what kind of signature do you need?</b><br><br><i>Not sure? Pick the closest one — I\'ll explain what each means.</i>',
     opts: [
-      { label: 'Signaturit', v: 'signaturit' },
-      { label: 'eSignAnywhere', v: 'esaw' },
-      { label: 'Not sure yet', v: 'unknown' }
+      { label: 'Advanced signature', v: 'advanced' },
+      { label: 'Simple signature', v: 'simple' },
+      { label: 'Certified email', v: 'email' },
+      { label: 'Certified SMS', v: 'sms' }
     ],
-    info: (v) => {
-      if (v === 'signaturit') return '<b>Great choice.</b> Signaturit places the signature by <i>text anchor</i>: you write <code>{{sign}}</code> in your document and the signature appears right there. No coordinates.';
-      if (v === 'esaw') return '<b>Noted.</b> eSignAnywhere is on the way. For now we\'ll build everything on <b>Signaturit</b>, and when eSAW is ready you migrate without redoing anything — the document is the same.';
-      return '<b>No problem.</b> We\'ll start with <b>Signaturit</b>, the most direct one: the signature is placed by writing <code>{{sign}}</code> in your document.';
-    },
-    reply: (v) => ({ signaturit: 'I use Signaturit', esaw: 'I use eSignAnywhere', unknown: 'Not sure yet' }[v])
+    info: (v) => ({
+      advanced: '<b>Advanced signature.</b> The signer is uniquely identified — with biometrics or a digital certificate. It\'s the strongest, most legally robust option, ideal for contracts and important agreements.',
+      simple: '<b>Simple signature.</b> Sign with a single click. Fast and frictionless — great for internal approvals or low-risk documents.',
+      email: '<b>Certified email.</b> Sends your document with legal proof of delivery and content. No signature needed — you just want evidence that it was sent and received.',
+      sms: '<b>Certified SMS.</b> A certified text message with legal proof of delivery, for short notices sent to a phone number.'
+    }[v]),
+    reply: (v) => ({ advanced: 'Advanced signature', simple: 'Simple signature', email: 'Certified email', sms: 'Certified SMS' }[v])
   },
   {
     key: 'freq',
@@ -149,18 +173,18 @@ const FLOW = [
   {
     key: 'team',
     skipIf: () => isOneShot(),
-    bot: 'Last one: <b>how many people on the team will use it?</b>',
+    bot: 'And to wrap up — is this just for you, or would you like access for others on your team too?',
     opts: [
-      { label: 'Just me', v: '1' },
-      { label: '2 to 5', v: 'few' },
-      { label: 'More than 5', v: 'many' }
+      { label: 'Just for me', v: '1' },
+      { label: 'A few of us', v: 'few' },
+      { label: 'My whole team', v: 'many' }
     ],
     info: (v) => {
-      if (v === '1') return 'Done, I have everything I need.';
-      if (v === 'few') return 'A small team. Everyone shares the same templates and brand, so documents come out consistent.';
-      return 'Several areas. At that size it\'s worth having centralized templates so nobody sends an off-brand document.';
+      if (v === '1') return 'A single seat, all set. You can always add teammates later.';
+      if (v === 'few') return 'We\'ll set up a few seats. Everyone shares the same templates and brand, so documents come out consistent.';
+      return 'Access for the whole team. At that size it\'s worth having centralized templates so nobody sends an off-brand document.';
     },
-    reply: (v) => ({ '1': 'Just me', few: 'Between 2 and 5', many: 'More than 5 people' }[v])
+    reply: (v) => ({ '1': 'Just for me', few: 'A few of us', many: 'My whole team' }[v])
   }
 ];
 
@@ -241,9 +265,100 @@ function sdHandlePick(st, o) {
   }
 
   A[st.key] = o.v;
+
+  // Tipo de firma: fija operationType + asigna proveedor (helper compartido).
+  if (st.key === 'sigType') sdSetSigType(o.v);
+
   const info = st.info(o.v);
   if (info) setTimeout(() => sdAddInfo(info), 400);
+
+  // Para el tipo de firma, además de explicarlo mostramos la asignación de
+  // proveedor (+ aviso si es eSAW, cuyo builder todavía está en integración).
+  if (st.key === 'sigType') {
+    setTimeout(() => sdAddInfo(sdProviderMsg(SIG_TYPE_PROVIDER[o.v])), 1000);
+    setTimeout(() => { chatStep++; sdAskStep(chatStep); }, 1900);
+    return;
+  }
+
   setTimeout(() => { chatStep++; sdAskStep(chatStep); }, info ? 1100 : 500);
+}
+
+/* Fija el tipo de firma: operationType (global del envío), ACC.sendType y el
+   proveedor derivado. Compartido entre los chips y la interpretación por IA. */
+function sdSetSigType(v) {
+  A.sigType = v;
+  operationType = v;          // la MISMA global que usa el envío en app.js
+  ACC.sendType = v;
+  const prov = SIG_TYPE_PROVIDER[v];
+  A.product = prov;           // signup.js lee A.product
+  ACC.product = prov;
+  return prov;
+}
+
+function sdProviderMsg(prov) {
+  return prov === 'esaw'
+    ? 'Advanced signatures run on <b>eSignAnywhere</b>, our provider for higher-assurance signing — we set that up for you, no need to choose.<br><br><i>Heads up: document generation for eSignAnywhere is still being wired up, so you can finish onboarding now and sending will follow shortly.</i>'
+    : 'We\'ll set you up on <b>Signaturit</b> — the quickest way to start with this signature type. No need to pick a provider: we choose the best fit for you.';
+}
+
+/* ============ TEXTO LIBRE (chat conversacional real) ============
+   El cliente escribe con sus palabras; interpretamos la intención con IA
+   (Claude vía proxy) y, si no está o no entiende, con heurística local. Lo que
+   quede sin resolver se pregunta guiado con chips. */
+async function sdSubmitText(e) {
+  if (e) e.preventDefault();
+  const input = sd$('sdChatText');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  input.value = '';
+  sdAddMe(text);
+  sdClearChips();
+  sdTyping(true);
+
+  // 1) IA primero; 2) si no, heurística local.
+  let intent = await SDIntent.classifyIntent(text, { step: FLOW[chatStep] && FLOW[chatStep].key, answers: A });
+  if (!intent) intent = SDIntent.localGuess(text);
+
+  sdTyping(false);
+
+  const applied = intent ? sdApplyIntent(intent) : [];
+
+  if (!applied.length) {
+    // No entendimos nada → guiar con el paso actual.
+    sdAddBot('I didn\'t quite catch that 🤔 — let me guide you. Pick the option that fits best:');
+    return sdAskStep(chatStep);
+  }
+
+  // Confirmamos lo entendido y seguimos por el primer paso sin responder.
+  if (intent.reply) sdAddBot(intent.reply);
+  else sdAddBot('Got it 👍');
+  sdAdvanceFromIntent();
+}
+
+/* Aplica al estado A los campos válidos que trajo el intent. Devuelve la lista
+   de campos aplicados. Maneja sigType especial (proveedor + provider msg). */
+function sdApplyIntent(intent) {
+  const order = ['sigType', 'freq', 'vol', 'ia', 'team'];
+  const applied = [];
+  order.forEach(k => {
+    if (intent[k] == null) return;
+    if (k === 'sigType') { sdSetSigType(intent[k]); setTimeout(() => sdAddInfo(sdProviderMsg(SIG_TYPE_PROVIDER[intent[k]])), 500); }
+    else A[k] = intent[k];
+    applied.push(k);
+  });
+  return applied;
+}
+
+/* Salta al primer paso del FLOW que siga sin responder (respetando skipIf).
+   Si ya está todo, cierra el chat. */
+function sdAdvanceFromIntent() {
+  const i = FLOW.findIndex(st => {
+    if (st.skipIf && st.skipIf()) return false;
+    return A[st.key] == null;
+  });
+  if (i === -1) { chatStep = FLOW.length; return setTimeout(sdFinishChat, 700); }
+  chatStep = i;
+  setTimeout(() => sdAskStep(chatStep), 700);
 }
 
 function sdFinishChat() {
@@ -267,7 +382,7 @@ function sdFinishChat() {
 
 function sdResetChat() {
   chatStep = 0;
-  A.product = A.freq = A.vol = A.ia = A.team = null;
+  A.sigType = A.product = A.freq = A.vol = A.ia = A.team = null;
   sdChatLogEl().innerHTML = ''; sdChatActsEl().innerHTML = '';
   sdAskStep(0);
 }

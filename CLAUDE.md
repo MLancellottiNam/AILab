@@ -180,10 +180,25 @@ producto le habla.
 
 ### Onboarding conversacional + planes — Hernán
 - Pantalla fork: "ya soy cliente" (entra con token) vs "quiero empezar" (chat).
-- **Chat guiado** (no formulario): chips de respuesta, "escribiendo…", píldoras
-  de info entre preguntas.
-- 1ª pregunta: **a qué producto envía** (Signaturit / eSAW / no sé). Por detrás
-  el camino SIEMPRE es Signaturit; la respuesta se adapta a lo elegido.
+- **Chat conversacional real (Hernán, 2026-07-15):** el cliente puede ESCRIBIR
+  con sus palabras (input de texto libre), no solo tocar chips. El texto se
+  interpreta con **IA (Claude vía `claude-proxy`)** que extrae la intención en
+  JSON (`js/ai.js` → `SDIntent.classifyIntent`); si la IA no está o no entiende,
+  cae a **heurística local** por palabras clave y, si tampoco, **guía con chips**.
+  Los chips se mantienen como atajo. La IA puede llenar varios campos de una y el
+  chat salta las preguntas ya respondidas (`sdAdvanceFromIntent`). Regla vigente:
+  la demo se sostiene sin IA (fallback obligatorio). El `claude-proxy` tiene la
+  API key del SERVIDOR — ver `functions/claude-proxy/`.
+- Chips de respuesta, "escribiendo…", píldoras de info entre preguntas.
+- 1ª pregunta: **qué tipo de firma necesita** (Advanced / Simple / Certified
+  email / Certified SMS), con explicación de cada uno (clientes sin conocimiento).
+  El precio NO se muestra acá; los planes/packs aparecen al final.
+- **Selección automática de proveedor (Hernán, 2026-07-15):** en "quiero empezar"
+  el usuario NO elige el proveedor — lo decide el tipo de firma. Firma **Advanced**
+  (nivel más alto) → **eSAW**; Simple / email / SMS → **Signaturit**. El chat
+  informa la asignación (y avisa que la generación de doc para eSAW está en
+  integración). Mapa en `SIG_TYPE_PROVIDER` (`js/onboarding.js`). En "ya soy
+  cliente" el usuario SÍ elige el proveedor (ya sabe cuál usa).
 - Después: volumen/mes, IA sí-no (con opción "¿qué hace exactamente?"), tamaño
   de equipo.
 - **3 planes:** Starter (gratis, 100 docs, sin IA), Pro (€49, 1.000 docs, con

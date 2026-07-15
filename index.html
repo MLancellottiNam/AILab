@@ -92,6 +92,11 @@
       </div>
       <div class="sd-chat-log" id="sdChatLog"></div>
       <div class="sd-chat-actions" id="sdChatActions"></div>
+      <form class="sd-chat-input" id="sdChatInput" onsubmit="sdSubmitText(event)">
+        <input type="text" id="sdChatText" autocomplete="off"
+               placeholder="Type what you need… e.g. “I need to send 300 contracts for signature”">
+        <button type="submit" class="sd-chat-send" id="sdChatSend" aria-label="Send">➤</button>
+      </form>
     </div>
     <div class="sd-nav" style="max-width:620px">
       <button class="sd-btn ghost" onclick="sdResetChat()">← Start over</button>
@@ -195,7 +200,7 @@
       <h2 id="sdDoneTitle">All set!</h2>
       <p id="sdDoneSub"></p>
       <div class="sd-recap" id="sdRecap"></div>
-      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdGo('s-sendtype')">Continue →</button>
+      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdAfterDone()">Continue →</button>
     </div>
   </section>
 
@@ -666,6 +671,7 @@ No special format needed. You can write:
 
 <script src="js/providers/esaw.js"></script>
 <script src="app.js"></script>
+<script src="js/ai.js"></script>
 <script src="js/onboarding.js"></script>
 <script src="js/plans.js"></script>
 <script src="js/signup.js"></script>

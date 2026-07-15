@@ -44,7 +44,8 @@ function recommend() {
 }
 
 function whyText(k) {
-  const b = ['Signaturit']; // por detrás siempre arranca acá
+  // Proveedor asignado según el tipo de firma (ver SIG_TYPE_PROVIDER en onboarding.js)
+  const b = [(typeof PROVIDER_NAME !== 'undefined' && PROVIDER_NAME[ACC.product]) || 'Signaturit'];
   if (isOneShot()) b.push(A.freq === 'oneshot' ? 'a one-off send' : 'occasional use');
   if (A.vol === 'low') b.push('low volume');
   if (A.vol === 'mid') b.push('medium volume');
