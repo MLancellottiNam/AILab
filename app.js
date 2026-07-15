@@ -818,6 +818,11 @@ function autoMatch(key, header) {
 }
 
 function updatePreview() {
+  // Puente builder→envío: si el PDF Builder ya armó matchedData (un PDF por
+  // destinatario), no lo reconstruimos desde el mapeo de columnas; solo
+  // re-renderizamos la tabla. (Hook mínimo, ver js/bridge.js.)
+  if (window.__sdBridge && window.__sdBridge.active) { renderPreviewTable(); return; }
+
   const isSMS = operationType === 'sms';
   const isAdvanced = operationType === 'advanced';
   const hasPDFs = Object.keys(pdfFiles).length > 0;

@@ -797,6 +797,10 @@ async function sdbGenerate() {
   done.textContent = `✓ ${n} PDF(s) generated and downloaded.` + (skipped > 0 ? ` (${skipped} beyond the plan limit)` : '');
   sdb$('sdbResults').appendChild(done);
   btn.disabled = false;
+
+  // Puente builder→envío: habilitar "Send for signature" ahora que hay PDFs.
+  const sendBtn = sdb$('sdbSendBtn');
+  if (sendBtn && builderState.dispatchDocs.length) sendBtn.style.display = '';
 }
 
 function sdbDownload(blob, name) {
