@@ -92,6 +92,11 @@
       </div>
       <div class="sd-chat-log" id="sdChatLog"></div>
       <div class="sd-chat-actions" id="sdChatActions"></div>
+      <form class="sd-chat-input" id="sdChatInput" onsubmit="sdSubmitText(event)">
+        <input type="text" id="sdChatText" autocomplete="off"
+               placeholder="Type what you need… e.g. “I need to send 300 contracts for signature”">
+        <button type="submit" class="sd-chat-send" id="sdChatSend" aria-label="Send">➤</button>
+      </form>
     </div>
     <div class="sd-nav" style="max-width:620px">
       <button class="sd-btn ghost" onclick="sdResetChat()">← Start over</button>
@@ -195,31 +200,7 @@
       <h2 id="sdDoneTitle">All set!</h2>
       <p id="sdDoneSub"></p>
       <div class="sd-recap" id="sdRecap"></div>
-      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdGo('s-provider')">Continue →</button>
-    </div>
-  </section>
-
-  <!-- 5a. PROVIDER (Signaturit / eSAW) — alimenta el provider del bulksend -->
-  <section class="sd-screen" id="s-provider">
-    <div class="sd-hero">
-      <h2>Choose your signature provider</h2>
-      <p>Where do you want to send your documents for signing?</p>
-    </div>
-    <div class="sd-sendtypes">
-      <div class="sd-sendtype" data-provider="signaturit" onclick="sdPickProvider(this)">
-        <div class="ic">🖋️</div>
-        <div class="tx"><h4>Signaturit <span class="sd-rec-tag">Recommended</span></h4><p>Text-anchor signing — ready today.</p></div>
-        <span class="sd-radio"></span>
-      </div>
-      <div class="sd-sendtype" data-provider="esaw" onclick="sdPickProvider(this)">
-        <div class="ic">📝</div>
-        <div class="tx"><h4>eSignAnywhere (eSAW)</h4><p>Real AcroForm signature fields — integration in progress.</p></div>
-        <span class="sd-radio"></span>
-      </div>
-    </div>
-    <div class="sd-nav">
-      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
-      <button class="sd-btn teal" id="sdProviderNext" disabled onclick="sdContinueProvider()">Continue →</button>
+      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdAfterDone()">Continue →</button>
     </div>
   </section>
 
@@ -696,10 +677,10 @@
 
 <script src="js/providers/esaw.js"></script>
 <script src="app.js"></script>
+<script src="js/ai.js"></script>
 <script src="js/onboarding.js"></script>
 <script src="js/plans.js"></script>
 <script src="js/signup.js"></script>
-<script src="js/ai.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/providers/signaturit.js"></script>
 </body>
