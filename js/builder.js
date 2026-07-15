@@ -288,18 +288,40 @@ function composeDoc(brief, opts, headers) {
   return parts.join('\n');
 }
 
-function sdbCompose() {
+async function sdbCompose() {
   if (!sdbAcc().ia) return; // gated por plan (el botón ya está disabled igual)
   const brief = sdb$('sdbBrief').value.trim();
   if (!brief) { sdbNote('Write what you need to send first.', 'warn'); return; }
   const headers = typeof dataHeaders !== 'undefined' ? dataHeaders : [];
   const opts = { tone: sdb$('sdbTone').value, lang: sdb$('sdbLang').value, len: sdb$('sdbLen').value };
-  const text = composeDoc(brief, opts, headers);
+
+  const btn = sdb$('sdbComposeBtn');
+  const prevLabel = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '✨ Drafting…'; }
+
+  let text, note;
+  try {
+    // Camino IA: el proxy Claude redacta la FORMA con {{columnas}} + firma.
+    if (typeof aiCall !== 'function') throw new Error('ai_unavailable');
+    const data = await aiCall('write-doc', {
+      idea: brief, tone: opts.tone, lang: opts.lang, length: opts.len, columns: headers
+    });
+    text = data && typeof data.text === 'string' ? data.text.trim() : '';
+    if (!text) throw new Error('ai_empty');
+    note = '✓ Draft ready. Edit anything, drag in columns, or generate. (The assistant writes form, not legal content.)';
+  } catch (e) {
+    // REGLA DE ORO: sin IA / error / timeout → fallback determinista, sin romper nada.
+    text = composeDoc(brief, opts, headers);
+    note = '✓ Draft ready (AI was unavailable, so we drafted it for you). Edit anything, drag in columns, or generate.';
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = prevLabel || '✨ Draft with AI'; }
+  }
+
   sdb$('sdbDocEditor').value = text;
   // Título de marca desde el idioma elegido (si el usuario no lo cambió)
   if (!sdb$('sdbDocTitle').value.trim()) sdb$('sdbDocTitle').value = (SDB_I18N[opts.lang] || SDB_I18N.en).title;
   sdbApplyEditorText(text);
-  sdbNote('✓ Draft ready. Edit anything, drag in columns, or generate. (The assistant writes form, not legal content.)', 'ok');
+  sdbNote(note, 'ok');
 }
 
 /* Editor en vivo: si ya hay {{variables}} en el texto, actualiza al instante.
