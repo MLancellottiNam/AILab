@@ -50,8 +50,10 @@ Campos:
 - vol: "low" (hasta ~100), "mid" (~100 a 1000), "high" (más de 1000).
 - ia: "yes" si quiere que la IA arme los documentos, "no" si prefiere manual.
 - team: "1" (solo él), "few" (2 a 5), "many" (más de 5).
-- reply: una frase breve y cálida, EN EL MISMO IDIOMA en que escribió el cliente (si escribió en español, respondé en español), que confirme y recomiende el tipo de firma que mejor le encaja y por qué. NUNCA menciones el proveedor: no nombres "Signaturit" ni "eSAW"/"eSignAnywhere" — para el cliente es transparente. Sin markdown.
-- clarify: si NO entendiste nada útil, una pregunta breve (en el idioma del cliente) para guiarlo; si entendiste algo, null.
+- reply: una frase breve y cálida, EN EL IDIOMA DE LA INTERFAZ que se indica en el mensaje (campo "Idioma de respuesta"), NO en el idioma en que escribió el cliente, que confirme y recomiende el tipo de firma que mejor le encaja y por qué. NUNCA menciones el proveedor: no nombres "Signaturit" ni "eSAW"/"eSignAnywhere" — para el cliente es transparente. Sin markdown.
+- clarify: si NO entendiste nada útil, una pregunta breve (en el idioma de la interfaz indicado) para guiarlo; si entendiste algo, null.
+
+IMPORTANTE — IDIOMA: reply y clarify van SIEMPRE en el idioma de la interfaz que te pasan en el mensaje ("es"=español, "en"=inglés), aunque el cliente haya escrito en otro idioma. Los valores de los campos (sigType, freq, etc.) son enums fijos y no cambian con el idioma.
 
 FUERA DE ÁMBITO: tu único trabajo es entender la necesidad del cliente para preparar su envío de documentos para firma. Si el mensaje NO tiene que ver con eso (preguntas de cultura general, deportes, noticias, charla, o cualquier tema ajeno), NO completes ni inventes campos: devolvé sigType, freq, vol, ia, team y reply TODOS en null, y en clarify una frase breve (en el idioma del cliente) aclarando amablemente que solo podés ayudar a definir su envío de documentos para firma y reconduciendo la conversación.`;
 
@@ -82,7 +84,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json(500, { error: "ANTHROPIC_API_KEY not configured" });
 
-  let body: { text?: string; context?: unknown };
+  let body: { text?: string; context?: unknown; lang?: string };
   try {
     body = await req.json();
   } catch {
@@ -90,6 +92,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
   const text = (body.text || "").toString().trim();
   if (!text) return json(400, { error: "Missing 'text'" });
+  // Idioma de la interfaz (del navegador). reply/clarify van en este idioma.
+  const lang = body.lang === "en" ? "en" : "es";
 
   const client = new Anthropic({ apiKey });
 
@@ -104,7 +108,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       system: SYSTEM,
       messages: [{
         role: "user",
-        content: `Contexto: ${JSON.stringify(body.context ?? {})}\n\nMensaje del cliente:\n${text}`,
+        content: `Idioma de respuesta (reply y clarify): ${lang} (${lang === "en" ? "inglés" : "español"})\nContexto: ${JSON.stringify(body.context ?? {})}\n\nMensaje del cliente:\n${text}`,
       }],
       output_config: { format: { type: "json_schema", schema: SCHEMA } },
     });

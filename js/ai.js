@@ -96,7 +96,9 @@ async function aiCall(task, payload) {
       const resp = await fetch(CLAUDE_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task: 'onboarding_intent', text, context })
+        // lang = idioma de la UI (SD_LANG, del navegador). La IA responde en ESE
+        // idioma, no en el que escribió el cliente, para no mezclar idiomas.
+        body: JSON.stringify({ task: 'onboarding_intent', text, context, lang: (typeof SD_LANG !== 'undefined' ? SD_LANG : 'es') })
       });
       if (!resp.ok) return null;
       const data = await resp.json().catch(() => null);
