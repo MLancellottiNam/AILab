@@ -2,7 +2,8 @@
 
 > Documento base para que cualquier sesión (Marcos, Hernán o Claude) arranque
 > sabiendo qué estamos construyendo, sobre qué base, y con qué reglas.
-> **Idioma:** comentarios y UI en español rioplatense; nombres de archivos y
+> **Idioma:** la **UI va en inglés** (decisión de Marcos, 2026-07); los
+> comentarios internos quedan en español rioplatense; nombres de archivos y
 > variables en inglés.
 
 ---
@@ -218,7 +219,7 @@ producto le habla.
 
 ## 9. Convenciones
 
-- Comentarios y UI en **español rioplatense**; archivos/variables en **inglés**.
+- **UI en inglés**; comentarios internos en **español rioplatense**; archivos/variables en **inglés**.
 - Módulos separados y autocontenidos.
 - Commits chicos y descriptivos.
 - **Confirmar el plan con el dueño antes de escribir código.**
