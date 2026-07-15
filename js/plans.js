@@ -117,8 +117,10 @@ function sdActivate(key, paid) {
 function sdEnterBuilder() {
   // Pills del header compartido (sd-top): plan + IA + tipo de envío
   const stLabel = (typeof SD_SENDTYPE_LABEL !== 'undefined' && ACC.sendType) ? SD_SENDTYPE_LABEL[ACC.sendType] : null;
+  const provLabel = ACC.provider === 'esaw' ? 'eSAW' : (ACC.provider ? 'Signaturit' : null);
   sd$('sdTopRight').innerHTML =
     `<span class="sd-pill plan">${ACC.plan}</span>` +
+    (provLabel ? `<span class="sd-pill">${provLabel}</span>` : '') +
     (ACC.ia ? '<span class="sd-pill ia">AI active</span>' : '<span class="sd-pill">manual mode</span>') +
     (stLabel ? `<span class="sd-pill">${stLabel}</span>` : '');
   sdGo('s-builder'); // sdGo llama a sdbOnEnter() para reflejar ACC en el builder

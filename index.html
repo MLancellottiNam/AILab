@@ -195,7 +195,31 @@
       <h2 id="sdDoneTitle">All set!</h2>
       <p id="sdDoneSub"></p>
       <div class="sd-recap" id="sdRecap"></div>
-      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdGo('s-sendtype')">Continue →</button>
+      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdGo('s-provider')">Continue →</button>
+    </div>
+  </section>
+
+  <!-- 5a. PROVIDER (Signaturit / eSAW) — alimenta el provider del bulksend -->
+  <section class="sd-screen" id="s-provider">
+    <div class="sd-hero">
+      <h2>Choose your signature provider</h2>
+      <p>Where do you want to send your documents for signing?</p>
+    </div>
+    <div class="sd-sendtypes">
+      <div class="sd-sendtype" data-provider="signaturit" onclick="sdPickProvider(this)">
+        <div class="ic">🖋️</div>
+        <div class="tx"><h4>Signaturit <span class="sd-rec-tag">Recommended</span></h4><p>Text-anchor signing — ready today.</p></div>
+        <span class="sd-radio"></span>
+      </div>
+      <div class="sd-sendtype" data-provider="esaw" onclick="sdPickProvider(this)">
+        <div class="ic">📝</div>
+        <div class="tx"><h4>eSignAnywhere (eSAW)</h4><p>Real AcroForm signature fields — integration in progress.</p></div>
+        <span class="sd-radio"></span>
+      </div>
+    </div>
+    <div class="sd-nav">
+      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
+      <button class="sd-btn teal" id="sdProviderNext" disabled onclick="sdContinueProvider()">Continue →</button>
     </div>
   </section>
 
@@ -346,7 +370,7 @@ No special format needed. You can write:
             </div>
           </div>
           <div class="sdb-banner" id="sdbAnchorBanner" style="display:none">
-            <b>Signature anchors detected.</b> They travel invisibly in the PDF; sending will pass them as anchors to the signature product (Signaturit / eSAW).
+            <b>Signature anchors detected.</b> For <b>Signaturit</b> they travel as invisible text anchors in the PDF. For <b>eSAW</b> this isn't enough: eSAW needs real AcroForm signature fields (<code>/FT /Sig</code>) — the bridge will inject them (e.g. with pdf-lib) at these anchor positions. See <code>js/providers/esaw.js</code>.
           </div>
         </div>
       </div>
@@ -433,6 +457,8 @@ No special format needed. You can write:
         <h2 class="section-title">Configuración</h2>
         <p class="section-desc">Configura el entorno y las opciones del envío</p>
         <div class="config-grid">
+          <!-- Selector temporal — lo reemplaza el onboarding conversacional cuando esté armado (ver CLAUDE.md) -->
+          <div class="config-card"><label>Proveedor</label><select id="cfg-provider"><option value="signaturit">Signaturit</option><option value="esaw">eSAW (eSignAnyWhere)</option></select></div>
           <div class="config-card"><label>Entorno <span class="req">*</span></label><select id="cfg-env"><option value="https://api.signaturit.com">Producción</option><option value="https://api.sandbox.signaturit.com">Sandbox</option></select></div>
           <div class="config-card"><label>Token API <span class="req">*</span></label><input type="password" id="cfg-token" placeholder="Pega tu token aquí"></div>
         </div>
@@ -662,6 +688,7 @@ No special format needed. You can write:
   </div>
 </div>
 
+<script src="js/providers/esaw.js"></script>
 <script src="app.js"></script>
 <script src="js/onboarding.js"></script>
 <script src="js/plans.js"></script>
