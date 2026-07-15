@@ -622,6 +622,27 @@ td { padding:8px 12px; border-bottom:1px solid var(--surface-2); max-width:200px
 .sd-console .c-ok { color:#7ee787; }
 .sd-console .c-dim { color:#8792a8; }
 .sd-console .c-key { color:#ffd479; }
+
+/* Setup progress (alta de cuenta) — barra + pasos secuenciales */
+.sd-setup { background:var(--surface); border:1px solid var(--border-2, var(--border)); border-radius:14px; padding:22px 22px 8px; box-shadow:0 6px 24px rgba(0,0,0,.25); }
+.sd-setup-bar { height:6px; border-radius:999px; background:var(--surface-3); overflow:hidden; margin-bottom:20px; }
+.sd-setup-fill { display:block; height:100%; width:0; border-radius:999px;
+  background:linear-gradient(90deg, var(--sig-primary), var(--sig-primary-dark));
+  box-shadow:0 0 12px rgba(23,163,152,.5); transition:width .82s cubic-bezier(.2,.7,.2,1); }
+.sd-setup-steps { display:flex; flex-direction:column; gap:2px; }
+.sd-setup-step { display:flex; align-items:center; gap:12px; padding:9px 4px; opacity:.45; transition:opacity .3s ease; }
+.sd-setup-step.active, .sd-setup-step.done { opacity:1; }
+.sd-setup-lbl { font-size:13.5px; color:var(--text); }
+.sd-setup-step.done .sd-setup-lbl { color:var(--text-muted); }
+/* Ícono de estado: punto → spinner (activo) → check (done) */
+.sd-setup-ic { width:20px; height:20px; flex:none; border-radius:50%; position:relative;
+  border:2px solid var(--border-active); box-sizing:border-box; }
+.sd-setup-step.active .sd-setup-ic { border-color:var(--sig-primary); border-top-color:transparent; animation:sdSpin .7s linear infinite; }
+.sd-setup-step.done .sd-setup-ic { border-color:var(--sig-primary); background:var(--sig-primary); animation:none; }
+.sd-setup-step.done .sd-setup-ic::after { content:''; position:absolute; left:6px; top:2px; width:5px; height:10px;
+  border:solid #fff; border-width:0 2px 2px 0; transform:rotate(45deg); }
+@keyframes sdSpin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce){ .sd-setup-step.active .sd-setup-ic{ animation:none; } .sd-setup-fill{ transition:none; } }
 .sd-token-box { background:var(--sig-primary-light); border:1px solid #b8e6e6; border-radius:10px; padding:13px 15px; margin-top:13px; }
 .sd-token-box .lbl { font-size:11px; font-weight:600; color:var(--sig-primary-dark); text-transform:uppercase; letter-spacing:.4px; margin-bottom:5px; }
 .sd-token-box code { font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--text); word-break:break-all; }
