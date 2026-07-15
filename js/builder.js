@@ -351,8 +351,10 @@ async function sdbCompose() {
   try {
     // Camino IA: el proxy Claude redacta la FORMA con {{columnas}} + firma.
     if (typeof aiCall !== 'function') throw new Error('ai_unavailable');
+    const notesEl = sdb$('sdbDesignNotes');
+    const notes = notesEl ? notesEl.value.trim() : '';
     const data = await aiCall('write-doc', {
-      idea: brief, tone: opts.tone, lang: opts.lang, length: opts.len, columns: headers
+      idea: brief, tone: opts.tone, lang: opts.lang, length: opts.len, columns: headers, notes
     });
     text = data && typeof data.text === 'string' ? data.text.trim() : '';
     if (!text) throw new Error('ai_empty');
@@ -760,6 +762,10 @@ async function sdbGenerate() {
     stage.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;opacity:0;z-index:-1;pointer-events:none';
     stage.appendChild(el);
     document.body.appendChild(stage);
+
+    // Dos frames para asegurar que el navegador hizo layout + paint del nodo
+    // antes de rasterizar (evita capturas en blanco en algunos navegadores).
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
     const fname = `${sdbSlug(title)}_${sdbSlug(String((nameKey && row[nameKey]) || ('doc_' + (i + 1))))}.pdf`;
     const opts = {

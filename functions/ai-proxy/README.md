@@ -20,10 +20,11 @@ body: { "task": "write-doc" | "extract-brand" | "detect-fields",
 
 Tareas implementadas:
 
-- **write-doc** — `payload: { idea, tone, lang, length, columns[] }` →
+- **write-doc** — `payload: { idea, tone, lang, length, columns[], notes? }` →
   `{ text }`. Redacta la FORMA del documento con tokens `{{Columna}}` (literales,
   solo los dados) y una única ancla `{{firma_destinatario}}`. No da contenido
-  jurídico.
+  jurídico. `notes` (opcional) = mini-prompt del usuario con instrucciones de
+  diseño/contenido; se respetan salvo que choquen con las HARD RULES.
 - **extract-brand** — `payload: { pdfBase64 }` (brandbook en base64) →
   `{ primary, secondary, font }`. Manda el PDF como bloque `document` a Claude.
   Colores validados como hex `#rrggbb` (el front cae a selección manual si falla).

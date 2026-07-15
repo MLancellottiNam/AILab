@@ -74,9 +74,13 @@ function writeDocPrompt(p: {
   lang: string;
   length: string;
   columns: string[];
+  notes: string;
 }): string {
   const cols = (p.columns || []).filter(Boolean);
   const tokens = cols.map((c) => `{{${c}}}`).join(", ") || "(none)";
+  const notesBlock = p.notes && p.notes.trim()
+    ? `\n\nEXTRA DESIGN/CONTENT NOTES FROM THE USER (honor them as long as they don't break the HARD RULES; never add legal advice):\n"""\n${p.notes.trim()}\n"""`
+    : "";
   return `You are a document-form assistant for a bulk-signing tool. You draft the FORM of a document, never legal content.
 
 HARD RULES:
@@ -94,7 +98,7 @@ ${p.idea}
 INSTRUCTIONS:
 - If the idea is long (more than ~40 words), treat it as the body: KEEP the user's wording, do not rewrite it. Only weave in the {{column}} tokens where they fit naturally and append the {{firma_destinatario}} anchor.
 - If the idea is short, write the full document from it, honoring the requested tone, language and length, weaving in the given column tokens and the signature anchor.
-- A column token may be omitted if it has no natural place. NEVER use a token that is not in the list above.`;
+- A column token may be omitted if it has no natural place. NEVER use a token that is not in the list above.${notesBlock}`;
 }
 
 // ---- Prompts de las otras tareas ----
@@ -204,6 +208,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         lang: String(p.lang || "en"),
         length: String(p.length || "medium"),
         columns: Array.isArray(p.columns) ? (p.columns as string[]) : [],
+        notes: String(p.notes || ""),
       });
       const out = await callClaude(
         key,
