@@ -186,7 +186,7 @@ const sdChatActsEl = () => sd$('sdChatActions');
 function sdScrollChat() { sdChatLogEl().scrollTop = sdChatLogEl().scrollHeight; }
 function sdAddBot(html) {
   const d = document.createElement('div'); d.className = 'sd-msg';
-  d.innerHTML = `<div class="bav">SD</div><div class="sd-bubble">${html}</div>`;
+  d.innerHTML = `<div class="bav">ND</div><div class="sd-bubble">${html}</div>`;
   sdChatLogEl().appendChild(d); sdScrollChat();
 }
 function sdAddMe(txt) {
@@ -204,7 +204,7 @@ function sdTyping(on) {
   if (on) {
     if (ex) return;
     const d = document.createElement('div'); d.className = 'sd-msg'; d.id = 'sdTypingDots';
-    d.innerHTML = '<div class="bav">SD</div><div class="sd-typing"><i></i><i></i><i></i></div>';
+    d.innerHTML = '<div class="bav">ND</div><div class="sd-typing"><i></i><i></i><i></i></div>';
     sdChatLogEl().appendChild(d); sdScrollChat();
   } else if (ex) ex.remove();
 }

@@ -1,5 +1,5 @@
 /* ============================================
-   Smart Dispatch — i18n del onboarding (ES / EN)
+   Namirial Dispatch — i18n del onboarding (ES / EN)
    --------------------------------------------
    Detecta el idioma del navegador (navigator.language): "es*" → español,
    cualquier otro → inglés. Expone:
@@ -50,7 +50,7 @@ const I18N = {
     // quiz
     'quiz.title': 'Tell us what you need',
     'quiz.lead': "Let's chat for a minute and we'll build the plan that fits you, without overselling.",
-    'quiz.assistant': 'Smart Dispatch Assistant',
+    'quiz.assistant': 'Namirial Dispatch Assistant',
     'quiz.online': 'online',
     'quiz.inputPh': 'Type what you need… e.g. “I need to send 300 contracts for signature”',
     'quiz.startOver': '← Start over',
@@ -92,7 +92,7 @@ const I18N = {
     'sendtype.continue': 'Continue →',
 
     // ===== chat FLOW =====
-    'chat.q.sigType': "Hi! I'm the Smart Dispatch assistant 👋<br><br>I'll help you find the plan that fits you. First: <b>what kind of signature do you need?</b><br><br><i>Not sure? Pick the closest one — I'll explain what each means.</i>",
+    'chat.q.sigType': "Hi! I'm the Namirial Dispatch assistant 👋<br><br>I'll help you find the plan that fits you. First: <b>what kind of signature do you need?</b><br><br><i>Not sure? Pick the closest one — I'll explain what each means.</i>",
     'chat.opt.advanced': 'Advanced signature', 'chat.opt.simple': 'Simple signature',
     'chat.opt.email': 'Certified email', 'chat.opt.sms': 'Certified SMS',
     'chat.info.advanced': '<b>Advanced signature.</b> The signer is uniquely identified — with biometrics or a digital certificate. It\'s the strongest, most legally robust option, ideal for contracts and important agreements.',
@@ -220,7 +220,7 @@ const I18N = {
     'client.enter': 'Entrar a la herramienta →',
     'quiz.title': 'Contanos qué necesitás',
     'quiz.lead': 'Charlemos un minuto y te armamos el plan que te sirve, sin venderte de más.',
-    'quiz.assistant': 'Asistente Smart Dispatch',
+    'quiz.assistant': 'Asistente Namirial Dispatch',
     'quiz.online': 'en línea',
     'quiz.inputPh': 'Escribí lo que necesitás… ej. “Necesito enviar 300 contratos para firmar”',
     'quiz.startOver': '← Empezar de nuevo',
@@ -255,7 +255,7 @@ const I18N = {
     'sendtype.sms': 'SMS certificado', 'sendtype.smsDesc': 'Certificá tus mensajes de texto',
     'sendtype.continue': 'Continuar →',
 
-    'chat.q.sigType': '¡Hola! Soy el asistente de Smart Dispatch 👋<br><br>Te ayudo a encontrar el plan que te sirve. Primero: <b>¿qué tipo de firma necesitás?</b><br><br><i>¿No estás seguro? Elegí la más parecida — te explico cada una.</i>',
+    'chat.q.sigType': '¡Hola! Soy el asistente de Namirial Dispatch 👋<br><br>Te ayudo a encontrar el plan que te sirve. Primero: <b>¿qué tipo de firma necesitás?</b><br><br><i>¿No estás seguro? Elegí la más parecida — te explico cada una.</i>',
     'chat.opt.advanced': 'Firma avanzada', 'chat.opt.simple': 'Firma simple',
     'chat.opt.email': 'Email certificado', 'chat.opt.sms': 'SMS certificado',
     'chat.info.advanced': '<b>Firma avanzada.</b> Identifica al firmante de forma única — con biometría o certificado digital. Es la opción más robusta legalmente, ideal para contratos y acuerdos importantes.',

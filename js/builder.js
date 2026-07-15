@@ -641,7 +641,7 @@ function sdbBuildDocEl(row, idx) {
       ${sdbFillTemplate(builderState.docHtml, row)}
     </div>
     <div style="border-top:1px solid #e6e9ef;margin:0 48px;padding:14px 0 20px;font-size:10px;color:#9aa4b2;display:flex;justify-content:space-between;font-family:monospace">
-      <span>${sdbEsc(title)}</span><span>Generated with Smart Dispatch</span>
+      <span>${sdbEsc(title)}</span><span>Generated with Namirial Dispatch</span>
     </div>`;
 
   // Espaciado de párrafos (por si el CSS de la hoja no aplica en el PDF).
