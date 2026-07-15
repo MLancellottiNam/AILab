@@ -152,7 +152,7 @@ const I18N = {
     'chat.notUnderstood': "I didn't quite catch that 🤔 — let me guide you. Pick the option that fits best:",
     'chat.offTopic': "I can only help you set up your document signing (signature type, volume, how often, team) 🙂 — that's outside what I handle. Let's get back to it:",
     'chat.progress': '{i} of {total}',
-    'chat.done.pack': 'Done 🎯 No need to subscribe: based on what you told me, the <b>{name}</b> fits you. Pay once and you\'re set.',
+    'chat.done.pack': 'Done 🎯 Based on what you told me, the <b>{name}</b> fits you. Pay once and you\'re set.',
     'chat.done.plan': 'Done 🎯 Based on what you told me, the plan that fits you is <b>{name}</b>.<br><br>Here are the options so you can compare.',
     'chat.seePacks': 'Continue →', 'chat.seePlan': 'Continue →',
 
@@ -320,7 +320,7 @@ const I18N = {
     'chat.notUnderstood': 'No te entendí del todo 🤔 — dejame guiarte. Elegí la opción que mejor encaje:',
     'chat.offTopic': 'Solo puedo ayudarte a preparar tu envío de documentos para firma (tipo de firma, volumen, cada cuánto, equipo) 🙂 — eso queda fuera de lo que manejo. Volvamos a eso:',
     'chat.progress': '{i} de {total}',
-    'chat.done.pack': 'Listo 🎯 No hace falta suscribirse: por lo que me contaste, te sirve el <b>{name}</b>. Pagás una vez y quedás.',
+    'chat.done.pack': 'Listo 🎯 Por lo que me contaste, te sirve el <b>{name}</b>. Pagás una vez y quedás.',
     'chat.done.plan': 'Listo 🎯 Por lo que me contaste, el plan que te sirve es <b>{name}</b>.<br><br>Acá están las opciones para que compares.',
     'chat.seePacks': 'Continuar →', 'chat.seePlan': 'Continuar →',
 
