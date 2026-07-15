@@ -433,6 +433,8 @@ No special format needed. You can write:
         <h2 class="section-title">Configuración</h2>
         <p class="section-desc">Configura el entorno y las opciones del envío</p>
         <div class="config-grid">
+          <!-- Selector temporal — lo reemplaza el onboarding conversacional cuando esté armado (ver CLAUDE.md) -->
+          <div class="config-card"><label>Proveedor</label><select id="cfg-provider"><option value="signaturit">Signaturit</option><option value="esaw">eSAW (eSignAnyWhere)</option></select></div>
           <div class="config-card"><label>Entorno <span class="req">*</span></label><select id="cfg-env"><option value="https://api.signaturit.com">Producción</option><option value="https://api.sandbox.signaturit.com">Sandbox</option></select></div>
           <div class="config-card"><label>Token API <span class="req">*</span></label><input type="password" id="cfg-token" placeholder="Pega tu token aquí"></div>
         </div>
@@ -662,6 +664,7 @@ No special format needed. You can write:
   </div>
 </div>
 
+<script src="js/providers/esaw.js"></script>
 <script src="app.js"></script>
 <script src="js/onboarding.js"></script>
 <script src="js/plans.js"></script>

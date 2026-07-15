@@ -112,6 +112,19 @@ código real tras la copia):
 > envío como `anchor`. Sin este puente, builder y envío son dos herramientas
 > separadas.
 
+> ⚠️ **eSAW NO funciona como Signaturit (CONFIRMADO contra el sandbox,
+> Hernán 2026-07-15).** eSAW **no** detecta anclas de texto invisible: sus
+> "SigStrings" son **campos de formulario PDF reales (AcroForm widgets
+> `/FT /Sig`)**. Se probó: texto plano (`sig`, `{{sig}}`, `#sig#`, etc.) →
+> 0 detecciones vía `POST /v6/file/prepare`. Un campo AcroForm `/FT /Sig`
+> con nombre → detectado con posición (página, X, Y) y tamaño ya calculados.
+> **Implicación para el puente/builder:** para el destino eSAW, `html2pdf`
+> (que genera PDF plano, sin AcroForm) **no alcanza** — hay que post-procesar
+> el PDF e insertar campos de firma reales (ej. con **pdf-lib**) donde hoy
+> van las anclas de texto. Detalle completo del hallazgo y del flujo
+> `upload → prepare → envelope/send` en el encabezado de
+> `js/providers/esaw.js`.
+
 ---
 
 ## 5. Estructura propuesta de AILab
@@ -160,6 +173,10 @@ producto le habla.
 ### Puente builder → envío (CRÍTICO) — Marcos
 - Pasar el PDF generado + los nombres de las anclas al flujo de envío existente.
 - Signaturit usa `anchor` (texto), NO coordenadas.
+- ⚠️ **eSAW es distinto:** necesita campos AcroForm reales en el PDF, no
+  anclas de texto (ver callout en §4). El puente/builder tiene que ramificar
+  por producto: texto invisible para Signaturit vs campo `/FT /Sig` real
+  (pdf-lib) para eSAW.
 
 ### Onboarding conversacional + planes — Hernán
 - Pantalla fork: "ya soy cliente" (entra con token) vs "quiero empezar" (chat).
@@ -177,12 +194,25 @@ producto le habla.
   límite.
 
 ### Integración eSAW — Hernán
-- **PRIMERO (día 1, mayor riesgo):** ¿eSAW soporta anclas de texto como
-  Signaturit, o exige coordenadas x/y/página? De eso depende si el mismo PDF
-  sirve para ambos.
-- Proxy espejo del de Signaturit (token por header, se descarta).
-- Adaptador que traduzca el envío genérico al formato de eSAW.
-- Debe convivir con Signaturit detrás de la misma interfaz.
+- ~~**PRIMERO (día 1, mayor riesgo):** ¿eSAW soporta anclas de texto como
+  Signaturit, o exige coordenadas x/y/página?~~ **RESUELTO (Hernán,
+  2026-07-15):** ni una cosa ni la otra exactamente — eSAW posiciona por
+  **campos AcroForm reales** (`/FT /Sig`) embebidos en el PDF; `file/prepare`
+  los detecta y devuelve su posición/tamaño ya calculados. El mismo PDF **NO**
+  sirve tal cual para ambos productos (ver callout en §4). Requiere un builder
+  que inserte campos de firma reales (pdf-lib) para el camino eSAW.
+- [x] Adaptador que traduce el envío genérico al formato de eSAW → hecho en
+  `js/providers/esaw.js` (interfaz común `send(...)`, misma que Signaturit).
+  Flujo `upload → prepare → envelope/send`, envío secuencial por loop (NO
+  `/envelopebulk/send`, decisión del equipo). **Probado end-to-end contra el
+  sandbox demo** (envelope real creado, viewer link funcional).
+- [ ] Proxy espejo del de Signaturit (`esaw-proxy`, token por header como
+  `apiToken` — eSAW **no** usa `Authorization: Bearer`). **Pendiente:** hoy
+  `ESAW_PROXY_URL` en `esaw.js` es un placeholder.
+- [ ] Convención de nombres de campo para **múltiples firmantes** en un mismo
+  PDF (ej. `sig_1`, `sig_2`) — con 1 firmante ya funciona; con varios falta.
+- Docs de integración eSAW de referencia en `docs/esaw/`.
+- Debe convivir con Signaturit detrás de la misma interfaz. ✓
 
 ### Capa de IA (opcional, al FINAL) — Marcos
 - Proxy a la API de Anthropic — **la API key es del SERVIDOR, no del usuario.**
