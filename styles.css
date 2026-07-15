@@ -504,7 +504,8 @@ td { padding:8px 12px; border-bottom:1px solid var(--surface-2); max-width:200px
 .sd-opt.sel .sd-radio::after { content:""; position:absolute; inset:2.5px; border-radius:50%; background:var(--sig-primary); }
 .sd-field { margin-bottom:13px; }
 .sd-field label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:5px; }
-.sd-field input { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:'IBM Plex Mono',monospace; background:var(--bg); }
+.sd-field input { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:'IBM Plex Mono',monospace; background:var(--bg); color:var(--text); }
+.sd-field input::placeholder { color:var(--text-dim); }
 .sd-field input:focus { outline:none; border-color:var(--sig-primary); background:var(--surface-2); }
 
 /* chat */
