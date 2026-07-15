@@ -18,10 +18,10 @@
 //   → 200 { ok: true,  data: {...} }
 //   → 4xx/5xx { ok: false, error: '<mensaje corto para el usuario>' }
 //
-// Tareas (se agregan de a una):
+// Tareas:
 //   - write-doc      → redacta la FORMA de un documento con {{columnas}} + firma
-//   - extract-brand  → (pendiente) brandbook PDF → {primary, secondary, font}
-//   - detect-fields  → (pendiente) texto pegado → campos {label, name, type}
+//   - extract-brand  → brandbook PDF → {primary, secondary, font}
+//   - detect-fields  → texto pegado → campos {raw, label, name, type}
 //
 // Regla de arquitectura del proyecto: cero persistencia. Esta función NO guarda
 // nada. El rate-limit por IP vive solo en memoria (se pierde al reciclar la
@@ -97,11 +97,47 @@ INSTRUCTIONS:
 - A column token may be omitted if it has no natural place. NEVER use a token that is not in the list above.`;
 }
 
+// ---- Prompts de las otras tareas ----
+
+// extract-brand: lee el brandbook (PDF) y saca identidad de marca. Best-effort:
+// si algo no está claro, devuelve su mejor estimación (el front valida igual).
+const EXTRACT_BRAND_PROMPT =
+  `You extract the visual brand identity from this brand book PDF. Return ONLY this JSON:
+{"primary":"#rrggbb","secondary":"#rrggbb","font":"<primary typeface family name>"}
+- primary = the main brand color; secondary = the main accent/secondary color.
+- Colors MUST be 6-digit hex (e.g. #00B4B6). If a color is given in another format, convert it.
+- font = the name of the primary typeface family (e.g. "Inter", "Georgia", "Helvetica"). Just the family name.
+- If something is not explicit, give your best guess from the document. Never return anything but the JSON.`;
+
+// detect-fields: nombra los huecos de un texto pegado. Devuelve el `raw` EXACTO
+// de cada hueco para que el front calcule la posición sin confiar en offsets del
+// modelo (robusto). Usa las columnas de datos como nombres cuando encajan.
+function detectFieldsPrompt(text: string, columns: string[]): string {
+  const cols = (columns || []).filter(Boolean);
+  const colList = cols.length ? cols.join(", ") : "(no data columns provided)";
+  return `You detect fillable blanks in a pasted document and name them. Return ONLY this JSON:
+{"fields":[{"raw":"<exact characters of the blank>","label":"<human label>","name":"<slug>","type":"data"|"signature"}]}
+
+RULES:
+- List the fields in the ORDER they appear in the text.
+- "raw" MUST be the exact run of characters that forms the blank as it appears in the text: the underscores (e.g. "________"), the bracketed text (e.g. "[coverage type]"), or the token (e.g. "{{name}}"). Copy it verbatim so it can be found by string match.
+- "name" is a lowercase slug (a-z, 0-9, underscores). If a blank clearly corresponds to one of these data columns, reuse its exact name: ${colList}. Otherwise derive a short slug from the context.
+- "type" is "signature" when the blank is where someone signs (words like firma/sign/signature nearby); otherwise "data".
+- Do NOT invent blanks that are not in the text.
+
+TEXT:
+"""
+${text}
+"""`;
+}
+
 // ---- Llamada a Anthropic + parseo defensivo ----
+// `content` es lo que va en messages[0].content: un string simple o un array de
+// bloques (texto + document para PDFs).
 async function callClaude(
   key: string,
   system: string,
-  userPrompt: string,
+  content: unknown,
   maxTokens: number,
 ): Promise<{ ok: true; data: unknown } | { ok: false; status: number; error: string }> {
   let res: Response;
@@ -117,7 +153,7 @@ async function callClaude(
         model: MODEL,
         max_tokens: maxTokens,
         system,
-        messages: [{ role: "user", content: userPrompt }],
+        messages: [{ role: "user", content }],
       }),
     });
   } catch (_e) {
@@ -183,7 +219,58 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return json(200, { ok: true, data: { text: data.text } });
     }
 
-    // TODO(IA): extract-brand, detect-fields (siguiente paso, tras validar write-doc).
+    case "extract-brand": {
+      const pdfBase64 = typeof p.pdfBase64 === "string" ? p.pdfBase64 : "";
+      if (!pdfBase64) return json(400, { ok: false, error: "Missing brand book" });
+      const out = await callClaude(
+        key,
+        "You output ONLY valid JSON. No markdown, no code fences, no commentary.",
+        [
+          { type: "document", source: { type: "base64", media_type: "application/pdf", data: pdfBase64 } },
+          { type: "text", text: EXTRACT_BRAND_PROMPT },
+        ],
+        400,
+      );
+      if (!out.ok) return json(out.status, { ok: false, error: out.error });
+      const d = out.data as { primary?: unknown; secondary?: unknown; font?: unknown };
+      const hex = (v: unknown) => (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null);
+      const primary = hex(d?.primary);
+      if (!primary) return json(502, { ok: false, error: "Could not read the brand colors" });
+      return json(200, {
+        ok: true,
+        data: {
+          primary,
+          secondary: hex(d?.secondary) || primary,
+          font: typeof d?.font === "string" && d.font.trim() ? d.font.trim() : "",
+        },
+      });
+    }
+
+    case "detect-fields": {
+      const text = typeof p.text === "string" ? p.text : "";
+      if (!text.trim()) return json(400, { ok: false, error: "No text to analyze" });
+      const columns = Array.isArray(p.columns) ? (p.columns as string[]) : [];
+      const out = await callClaude(
+        key,
+        "You output ONLY valid JSON. No markdown, no code fences, no commentary.",
+        detectFieldsPrompt(text, columns),
+        1500,
+      );
+      if (!out.ok) return json(out.status, { ok: false, error: out.error });
+      const d = out.data as { fields?: unknown };
+      if (!Array.isArray(d?.fields)) return json(502, { ok: false, error: "The AI response was malformed" });
+      // Saneamos: cada campo necesita un `raw` string; el resto con defaults.
+      const fields = (d.fields as Record<string, unknown>[])
+        .filter((f) => f && typeof f.raw === "string" && f.raw.length > 0)
+        .map((f) => ({
+          raw: f.raw as string,
+          label: typeof f.label === "string" ? f.label : (f.raw as string),
+          name: typeof f.name === "string" ? f.name : "",
+          type: f.type === "signature" ? "signature" : "data",
+        }));
+      if (!fields.length) return json(502, { ok: false, error: "No fields detected" });
+      return json(200, { ok: true, data: { fields } });
+    }
 
     default:
       return json(400, { ok: false, error: "Unknown task" });

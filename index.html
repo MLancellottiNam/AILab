@@ -294,6 +294,7 @@
           <div class="sdb-editor-tools">
             <label class="sdb-mini-btn" style="cursor:pointer">Upload .docx/.txt<input type="file" id="sdbFileDoc" accept=".docx,.txt" style="display:none"></label>
             <button class="sdb-mini-btn" onclick="sdbDetectManual()">Detect by patterns</button>
+            <button class="sdb-mini-btn" id="sdbDetectAiBtn" style="display:none" onclick="sdbDetectWithIA()">✨ Detect with AI</button>
             <button class="sdb-mini-btn" onclick="sdbLoadSample()">See example</button>
           </div>
           <div class="sdb-detect-note" id="sdbDetectNote"></div>
@@ -327,6 +328,7 @@
             <div class="sdb-iahead"><span>✨</span> <span id="sdbIaTitle">AI layer</span></div>
             <p id="sdbIaDesc">Upload your brand book and the AI extracts colors and typography automatically.</p>
             <button class="btn sdb-btn-ia" id="sdbIaBtn" disabled onclick="sdbRunIA()">Extract brand from brand book</button>
+            <input type="file" id="sdbFileBrand" accept="application/pdf,.pdf" style="display:none">
           </div>
           <label class="sdb-toggle"><input type="checkbox" id="sdbRevealAnchors"> Show signature anchors (they stay invisible in the PDF)</label>
         </div>

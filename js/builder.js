@@ -47,20 +47,25 @@ function sdbNote(msg, kind) {
 function sdbOnEnter() {
   const acc = sdbAcc();
 
-  // Caja de IA (paso 3, brandbook). Real pendiente del proxy → siempre disabled.
+  // Caja de IA (paso 3, brandbook). Habilitada cuando el plan incluye IA; el
+  // proxy real (ai-proxy) hace la extracción, con fallback a selección manual.
   const box = sdb$('sdbIaBox'), iaBtn = sdb$('sdbIaBtn');
   if (acc.ia) {
     box.classList.remove('locked');
     sdb$('sdbIaTitle').textContent = 'AI layer';
-    sdb$('sdbIaDesc').textContent = 'Included in your plan. Upload your brand book and the AI will extract colors and typography. (In progress.)';
-    iaBtn.textContent = '✨ Extract brand from brand book · coming soon';
+    sdb$('sdbIaDesc').textContent = 'Included in your plan. Upload your brand book (PDF) and the AI extracts colors and typography.';
+    iaBtn.textContent = '✨ Extract brand from brand book';
   } else {
     box.classList.add('locked');
     sdb$('sdbIaTitle').textContent = 'AI layer · not included';
     sdb$('sdbIaDesc').textContent = 'Your plan uses manual mode. With the Pro plan, the AI extracts the brand, places the fields and maps the data for you.';
     iaBtn.textContent = '🔒 Available on the Pro plan';
   }
-  iaBtn.disabled = true; // sin proxy todavía
+  iaBtn.disabled = !acc.ia;
+
+  // Botón "Detect with AI" (junto a "Detect by patterns"): solo con plan IA.
+  const detBtn = sdb$('sdbDetectAiBtn');
+  if (detBtn) detBtn.style.display = acc.ia ? '' : 'none';
 
   // Redactor asistido (composeDoc): habilitado si el plan incluye IA.
   // Hoy composeDoc es determinista (plantillas); cuando esté el proxy Claude
@@ -177,10 +182,52 @@ function sdbLoadSample() {
   sdbNote('Example loaded. Try <b>Detect by patterns</b>.', 'ok');
 }
 
-function sdbDetectWithIA() {
-  // Apagado hasta el proxy real de Claude. El botón está disabled; esto es un salvavidas.
-  // TODO(IA): reemplazar por llamada al proxy Claude → JSON de campos {label,type}.
-  sdbNote('AI detection is enabled once we connect the Claude proxy. For now use <b>Detect by patterns</b>.', 'warn');
+async function sdbDetectWithIA() {
+  if (!sdbAcc().ia) return; // gated por plan (el botón ya está oculto)
+  const txt = sdb$('sdbDocEditor').value.trim();
+  if (!txt) { sdbNote('Write or paste something first.', 'warn'); return; }
+  const headers = typeof dataHeaders !== 'undefined' ? dataHeaders : [];
+
+  const btn = sdb$('sdbDetectAiBtn');
+  const prev = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Detecting…'; }
+  sdbNote('Reading the document with AI…', 'ok');
+
+  try {
+    if (typeof aiCall !== 'function') throw new Error('ai_unavailable');
+    const data = await aiCall('detect-fields', { text: txt, columns: headers });
+    const raws = Array.isArray(data && data.fields) ? data.fields : [];
+    // Ubicamos cada hueco por su `raw` EXACTO con un cursor que avanza (robusto
+    // ante huecos repetidos; no confiamos en offsets del modelo).
+    let cursor = 0;
+    const found = [];
+    raws.forEach(f => {
+      if (!f || typeof f.raw !== 'string' || !f.raw) return;
+      const idx = txt.indexOf(f.raw, cursor);
+      if (idx < 0) return;
+      const guess = sdbSlug(f.name || f.label) || ('field_' + (found.length + 1));
+      found.push({
+        raw: f.raw, label: f.label || f.raw, guess, pos: idx,
+        type: (f.type === 'signature' || looksLikeSign(f.label) || looksLikeSign(guess)) ? 'signature' : 'data'
+      });
+      cursor = idx + f.raw.length;
+    });
+    if (!found.length) throw new Error('ai_no_match');
+    found.sort((a, b) => a.pos - b.pos);
+    sdbRenderFieldsEditor(found);
+    sdbNote(`AI found <b>${found.length} field(s)</b>. Review the names and mark which one is the signature.`, 'ok');
+  } catch (e) {
+    // REGLA DE ORO: sin IA / error → detección por patrones (con etiquetas smart).
+    const found = sdbScanFields(txt, true);
+    if (!found.length) {
+      sdbNote('AI unavailable and no blanks found by patterns. Try underscores (____), [brackets] or <code>{{variables}}</code>.', 'warn');
+    } else {
+      sdbRenderFieldsEditor(found);
+      sdbNote(`AI was unavailable, so we detected <b>${found.length} field(s)</b> by patterns instead. Review and confirm.`, 'ok');
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = prev || 'Detect with AI'; }
+  }
 }
 
 /* ---- Editor de campos detectados ---- */
@@ -431,10 +478,66 @@ function sdbSyncBrand() {
   sdb$('sdbBrandHex').value = c;
   sdbRenderPreview();
 }
+// Botón "Extract brand from brand book": abre el selector de PDF. El trabajo
+// real lo hace sdbExtractBrand() al elegir archivo.
 function sdbRunIA() {
-  // Extracción del brandbook con IA — pendiente del proxy de Claude.
-  // TODO(IA): subir brandbook (PDF) → proxy Claude → JSON {primary, secondary, font}.
-  sdbNote('AI brand extraction is enabled once we connect the Claude proxy.', 'warn');
+  if (!sdbAcc().ia) return;
+  const inp = sdb$('sdbFileBrand');
+  if (inp) inp.click();
+}
+
+// Matchea el nombre de fuente que devuelve la IA contra las opciones del select
+// (Inter/Georgia/Times/Arial). Si no hay match, deja la fuente actual.
+function sdbMatchFont(name) {
+  if (!name) return null;
+  const sel = sdb$('sdbBrandFont');
+  const n = String(name).toLowerCase();
+  const opt = [...sel.options].find(o => {
+    const label = o.textContent.toLowerCase();
+    const val = o.value.toLowerCase();
+    return label.includes(n) || n.includes(label.split(' ')[0]) || val.includes(n);
+  });
+  return opt ? opt.value : null;
+}
+
+async function sdbExtractBrand(files) {
+  const f = files && files[0];
+  if (!f) return;
+  if (!/pdf$/i.test(f.name) && f.type !== 'application/pdf') {
+    sdbNote('Upload your brand book as a <b>PDF</b>.', 'warn');
+    return;
+  }
+  const btn = sdb$('sdbIaBtn');
+  const prev = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '✨ Reading brand book…'; }
+  sdbNote('Reading your brand book with AI…', 'ok');
+
+  try {
+    if (typeof aiCall !== 'function') throw new Error('ai_unavailable');
+    // PDF → base64 (sin el prefijo data:...;base64,). Cero persistencia: en memoria.
+    const pdfBase64 = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).split(',')[1] || '');
+      r.onerror = () => reject(new Error('read_error'));
+      r.readAsDataURL(f);
+    });
+    const data = await aiCall('extract-brand', { pdfBase64 });
+    if (!data || !/^#[0-9a-fA-F]{6}$/.test(data.primary || '')) throw new Error('ai_bad_brand');
+
+    sdb$('sdbBrandColor').value = data.primary;
+    sdb$('sdbBrandHex').value = data.primary;
+    sdbSyncBrand();
+    const fontVal = sdbMatchFont(data.font);
+    if (fontVal) { sdb$('sdbBrandFont').value = fontVal; sdbRenderPreview(); }
+    sdbNote(`✓ Brand applied from <b>${sdbEsc(f.name)}</b>: color <code>${sdbEsc(data.primary)}</code>${data.font ? ` · font “${sdbEsc(data.font)}”${fontVal ? '' : ' (no close match, kept current)'}` : ''}. Tweak it if you like.`, 'ok');
+  } catch (e) {
+    // REGLA DE ORO: sin IA / error → selección manual, sin romper nada.
+    sdbNote('We couldn\'t read the brand book with AI — set the color and font manually below.', 'warn');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = prev || '✨ Extract brand from brand book'; }
+    const inp = sdb$('sdbFileBrand');
+    if (inp) inp.value = ''; // permite re-subir el mismo archivo
+  }
 }
 
 /* ========================================
@@ -576,6 +679,8 @@ function sdbInit() {
 
   sdb$('sdbFileDoc').addEventListener('change', e => sdbHandleDoc(e.target.files));
   sdb$('sdbFileData').addEventListener('change', e => sdbHandleData(e.target.files));
+  const brandInp = sdb$('sdbFileBrand');
+  if (brandInp) brandInp.addEventListener('change', e => sdbExtractBrand(e.target.files));
   sdb$('sdbDocEditor').addEventListener('input', sdbEditorLive); // preview en vivo + soltar columnas
 
   sdb$('sdbBrandColor').addEventListener('input', sdbSyncBrand);

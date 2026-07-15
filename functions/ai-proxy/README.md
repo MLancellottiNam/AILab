@@ -24,8 +24,13 @@ Tareas implementadas:
   `{ text }`. Redacta la FORMA del documento con tokens `{{Columna}}` (literales,
   solo los dados) y una única ancla `{{firma_destinatario}}`. No da contenido
   jurídico.
-- extract-brand — _pendiente_.
-- detect-fields — _pendiente_.
+- **extract-brand** — `payload: { pdfBase64 }` (brandbook en base64) →
+  `{ primary, secondary, font }`. Manda el PDF como bloque `document` a Claude.
+  Colores validados como hex `#rrggbb` (el front cae a selección manual si falla).
+- **detect-fields** — `payload: { text, columns[] }` →
+  `{ fields: [{ raw, label, name, type }] }`. Nombra los huecos del texto pegado.
+  Devuelve el `raw` EXACTO de cada hueco para que el front calcule la posición
+  por string-match (sin confiar en offsets del modelo).
 
 ## Notas de arquitectura
 
