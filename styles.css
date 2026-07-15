@@ -323,3 +323,121 @@ td { padding:8px 12px; border-bottom:1px solid var(--surface-2); max-width:200px
   .launcher { padding:24px; }
   .files-layout { grid-template-columns:1fr; }
 }
+
+/* ============================================
+   SMART DISPATCH — PDF BUILDER
+   Todo scopeado (#s-builder / .sdb-*) para no pisar el bulksend.
+   ============================================ */
+:root { --sdb-brand: var(--sig-primary); }
+
+.sdb-screen { display:none; }
+.sdb-screen.on { display:block; animation:fadeIn .3s ease; }
+
+#sdbDevEntry {
+  position:fixed; right:16px; bottom:16px; z-index:2500;
+  background:var(--sig-navy); color:#fff; border:none; border-radius:24px;
+  padding:10px 16px; font-size:13px; font-weight:600; cursor:pointer;
+  font-family:inherit; box-shadow:0 6px 20px rgba(13,31,60,.28);
+}
+#sdbDevEntry:hover { background:var(--sig-navy-light); }
+
+.sdb-topbar {
+  background:var(--sig-navy); color:#fff; padding:13px 22px;
+  display:flex; align-items:center; gap:11px; position:sticky; top:0; z-index:50;
+}
+.sdb-topbar .sdb-logo {
+  width:27px; height:27px; border-radius:7px; background:var(--sig-primary);
+  display:grid; place-items:center; font-weight:700; font-size:11px;
+}
+.sdb-topbar .sdb-title { font-size:15px; font-weight:600; }
+.sdb-topbar .sdb-title span { opacity:.7; font-weight:400; }
+.sdb-topbar .sdb-back { margin-left:auto; }
+
+.sdb-grid {
+  display:grid; grid-template-columns:370px 1fr; gap:18px;
+  max-width:1080px; margin:0 auto; padding:22px;
+}
+@media (max-width:860px) { .sdb-grid { grid-template-columns:1fr; } }
+.sdb-col { min-width:0; }
+
+.sdb-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:18px; margin-bottom:14px;
+}
+.sdb-card h3 {
+  font-size:13.5px; font-weight:600; margin-bottom:12px;
+  display:flex; align-items:center; gap:8px; color:var(--text);
+}
+.sdb-num {
+  width:21px; height:21px; border-radius:50%; background:var(--sig-primary);
+  color:#fff; display:grid; place-items:center; font-size:11px; flex-shrink:0;
+}
+.sdb-num.navy { background:var(--sig-navy); }
+
+.sdb-drop {
+  border:2px dashed var(--border); border-radius:10px; padding:20px 14px;
+  text-align:center; cursor:pointer; transition:.2s; font-size:13px;
+  color:var(--text-muted); display:block;
+}
+.sdb-drop:hover, .sdb-drop.drag { border-color:var(--sig-primary); background:rgba(0,180,182,.04); }
+.sdb-drop.ok { border-style:solid; border-color:var(--sig-primary); background:var(--sig-primary-light); color:var(--sig-navy); }
+.sdb-drop input { display:none; }
+.sdb-sub { font-size:11px; color:var(--text-muted); }
+
+.sdb-hint { font-size:11.5px; color:var(--text-muted); margin-top:8px; line-height:1.5; }
+.sdb-hint code {
+  background:var(--surface-2); padding:1px 5px; border-radius:4px;
+  font-family:'JetBrains Mono',monospace; color:var(--sig-orange); font-size:11px;
+}
+
+.sdb-vars { display:flex; flex-wrap:wrap; gap:5px; margin-top:9px; }
+.sdb-var-chip {
+  font-size:11px; font-family:'JetBrains Mono',monospace; background:#eef7ff;
+  color:#2d6ca8; padding:3px 7px; border-radius:5px; border:1px solid #d5e8f7;
+}
+.sdb-var-chip.sign { background:#fff0e8; color:var(--sig-orange); border-color:#ffd9c5; }
+
+.sdb-row { display:flex; gap:9px; align-items:center; margin-bottom:9px; }
+.sdb-row label { font-size:12px; color:var(--text-muted); width:64px; flex-shrink:0; }
+.sdb-row input[type=color] { width:42px; height:31px; border:1px solid var(--border); border-radius:6px; cursor:pointer; padding:2px; background:#fff; }
+.sdb-row select, .sdb-row input[type=text] { flex:1; padding:8px 10px; border:1px solid var(--border); border-radius:7px; font-size:13px; font-family:inherit; background:var(--surface); color:var(--text); }
+.sdb-hexin { max-width:96px; font-family:'JetBrains Mono',monospace; }
+
+.sdb-iabox { background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:13px; margin-top:11px; }
+.sdb-iabox.locked { opacity:.8; }
+.sdb-iahead { display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; color:var(--text-muted); margin-bottom:7px; }
+.sdb-iabox p { font-size:11.5px; color:var(--text-muted); line-height:1.5; margin-bottom:9px; }
+.sdb-btn-ia { background:var(--surface-3); color:var(--text-muted); width:100%; justify-content:center; cursor:not-allowed; }
+
+.sdb-toggle { display:flex; align-items:center; gap:7px; margin-top:10px; font-size:12px; color:var(--text-muted); cursor:pointer; }
+.sdb-full { width:100%; justify-content:center; }
+
+.sdb-results { margin-top:10px; }
+.sdb-result-item { display:flex; align-items:center; gap:9px; padding:8px 11px; background:var(--surface-2); border-radius:7px; margin-bottom:5px; font-size:12.5px; }
+.sdb-result-item .sdb-dot { width:7px; height:7px; border-radius:50%; background:var(--sig-primary); flex-shrink:0; }
+.sdb-result-item .sdb-fname { flex:1; font-family:'JetBrains Mono',monospace; font-size:11.5px; word-break:break-all; }
+.sdb-badge { font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; background:var(--sig-primary-light); color:var(--sig-primary-dark); }
+.sdb-done { font-size:12px; color:var(--sig-primary-dark); font-weight:600; margin-top:7px; }
+
+.sdb-sticky { position:sticky; top:64px; }
+.sdb-prevhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; }
+.sdb-prevhead h3 { margin:0; }
+.sdb-pager { font-size:12px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
+
+.sdb-paper { background:#fff; border:1px solid var(--border); border-radius:8px; box-shadow:0 3px 16px rgba(13,31,60,.06); min-height:380px; overflow:hidden; }
+.sdb-paper-inner { padding:44px 48px; font-size:13px; line-height:1.7; color:#1a2332; cursor:pointer; }
+.sdb-doc-bar { height:5px; background:var(--sdb-brand); margin:-44px -48px 26px; }
+.sdb-doc-title { font-size:19px; font-weight:700; color:var(--sdb-brand); margin-bottom:4px; }
+.sdb-doc-meta { font-size:11px; color:var(--text-muted); margin-bottom:20px; font-family:'JetBrains Mono',monospace; }
+.sdb-paper-inner h1, .sdb-paper-inner h2, .sdb-paper-inner h3 { color:var(--sdb-brand); margin:15px 0 8px; font-size:15px; }
+.sdb-paper-inner p { margin-bottom:10px; }
+.sdb-val { font-weight:600; }
+.sdb-sign-anchor {
+  color:#fafafa; background:#fafafa; border:1px dashed #ddd; padding:1px 4px;
+  border-radius:3px; font-family:'JetBrains Mono',monospace; font-size:11px;
+}
+.sdb-sign-anchor.reveal { color:var(--sig-orange) !important; background:#fff0e8 !important; border-color:#ffd9c5; }
+.sdb-empty { color:var(--text-muted); text-align:center; padding:70px 20px; font-size:13px; cursor:default; }
+
+.sdb-banner { background:#fff0e8; border:1px solid #ffd9c5; border-radius:8px; padding:10px 12px; font-size:11.5px; color:#b5461f; margin-top:11px; line-height:1.5; }
+.sdb-banner code { font-family:'JetBrains Mono',monospace; }

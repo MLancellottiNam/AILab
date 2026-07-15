@@ -10,6 +10,7 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2300B4B6'/><text x='50' y='68' font-size='42' font-weight='800' fill='white' text-anchor='middle' font-family='Arial'>MS</text></svg>">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -320,6 +321,99 @@
   </div>
 </div>
 
+<!-- ===== PDF BUILDER (Smart Dispatch) ===== -->
+<section id="s-builder" class="sdb-screen">
+  <div class="sdb-topbar">
+    <div class="sdb-logo">SD</div>
+    <div class="sdb-title">Smart Dispatch · <span>PDF Builder</span></div>
+    <button class="btn btn-secondary btn-small sdb-back" onclick="closeBuilder()">← Salir</button>
+  </div>
+
+  <div class="sdb-grid">
+    <div class="sdb-col">
+      <!-- 1. Documento base -->
+      <div class="sdb-card">
+        <h3><span class="sdb-num">1</span> Documento base</h3>
+        <label class="sdb-drop" id="sdbDropDoc">
+          <input type="file" id="sdbFileDoc" accept=".docx">
+          <div id="sdbDropDocLabel">Subí tu <b>plantilla.docx</b><br><span class="sdb-sub">con variables entre llaves dobles</span></div>
+        </label>
+        <div class="sdb-hint">Usá <code>{{variable}}</code> para datos y <code>{{firma_x}}</code> como ancla de firma. El producto de firma coloca la firma en el ancla, sin coordenadas.</div>
+        <div class="sdb-vars" id="sdbVarsBox"></div>
+      </div>
+
+      <!-- 2. Datos -->
+      <div class="sdb-card">
+        <h3><span class="sdb-num">2</span> Datos</h3>
+        <label class="sdb-drop" id="sdbDropData">
+          <input type="file" id="sdbFileData" accept=".csv,.json,.xlsx,.xls">
+          <div id="sdbDropDataLabel">Subí <b>datos.csv / .xlsx / .json</b></div>
+        </label>
+        <div class="sdb-hint" id="sdbDataInfo"></div>
+      </div>
+
+      <!-- 3. Marca -->
+      <div class="sdb-card">
+        <h3><span class="sdb-num">3</span> Marca</h3>
+        <div class="sdb-row">
+          <label>Color</label>
+          <input type="color" id="sdbBrandColor" value="#00B4B6">
+          <input type="text" id="sdbBrandHex" value="#00B4B6" class="sdb-hexin">
+        </div>
+        <div class="sdb-row">
+          <label>Título</label>
+          <input type="text" id="sdbDocTitle" value="Contrato de servicios">
+        </div>
+        <div class="sdb-row">
+          <label>Fuente</label>
+          <select id="sdbBrandFont">
+            <option value="'Inter',sans-serif">Inter (sans)</option>
+            <option value="Georgia,serif">Georgia (serif)</option>
+            <option value="'Times New Roman',serif">Times (serif)</option>
+            <option value="Arial,sans-serif">Arial (sans)</option>
+          </select>
+        </div>
+        <div class="sdb-iabox locked" id="sdbIaBox">
+          <div class="sdb-iahead"><span>✨</span> Capa de IA · próximamente</div>
+          <p>En modo manual elegís color, título y tipografía. Más adelante la IA extrae la marca de tu brandbook y pre-completa esto por vos.</p>
+          <button class="btn sdb-btn-ia" disabled>🔒 Disponible más adelante</button>
+        </div>
+        <label class="sdb-toggle"><input type="checkbox" id="sdbRevealAnchors"> Mostrar anclas de firma (en el PDF quedan invisibles)</label>
+      </div>
+
+      <!-- 4. Generar -->
+      <div class="sdb-card">
+        <h3><span class="sdb-num">4</span> Generar</h3>
+        <button class="btn btn-primary sdb-full" id="sdbGenBtn" disabled>Generar PDFs</button>
+        <div class="sdb-hint" id="sdbGenHint">Cargá el documento y los datos para habilitar.</div>
+        <div id="sdbResults" class="sdb-results"></div>
+      </div>
+    </div>
+
+    <div class="sdb-col">
+      <div class="sdb-card sdb-sticky">
+        <div class="sdb-prevhead">
+          <h3><span class="sdb-num navy">👁</span> Vista previa</h3>
+          <div class="sdb-pager" id="sdbPager"></div>
+        </div>
+        <div class="sdb-paper">
+          <div class="sdb-paper-inner" id="sdbPreview">
+            <div class="sdb-empty">Subí un documento para ver la vista previa con tus datos.</div>
+          </div>
+        </div>
+        <div class="sdb-banner" id="sdbAnchorBanner" style="display:none">
+          <b>Anclas de firma detectadas.</b> Viajan invisibles en el PDF; el envío las pasará como ancla al producto de firma (Signaturit / eSAW).
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Entrada TEMPORAL de desarrollo. La reemplaza el onboarding de Hernán. -->
+<button id="sdbDevEntry" onclick="showBuilder()" title="Abrir PDF Builder (dev)">🛠 PDF Builder</button>
+
 <script src="app.js"></script>
+<script src="js/builder.js"></script>
+<script src="js/providers/signaturit.js"></script>
 </body>
 </html>
