@@ -287,10 +287,15 @@ async function sdSubmitText(e) {
   if (!applied.length) {
     // Nada aplicable: o el mensaje está fuera del ámbito del asistente (temas
     // ajenos a preparar un envío de documentos para firma), o no se entendió.
-    // Si la IA mandó un clarify (redirect a medida), lo usamos; si no, avisamos
-    // que es fuera de ámbito y re-preguntamos el paso actual.
+    // Mostramos el redirect (clarify de la IA o chat.offTopic) y RE-MOSTRAMOS
+    // SOLO las opciones del paso actual — sin repetir la pregunta/saludo entero.
     sdAddBot(intent && intent.clarify ? intent.clarify : t('chat.offTopic'));
-    return sdAskStep(chatStep);
+    const st = FLOW[chatStep];
+    if (st) {
+      const opts = typeof st.opts === 'function' ? st.opts() : st.opts;
+      sdSetChips(opts, (o) => sdHandlePick(st, o));
+    }
+    return;
   }
 
   // Confirmamos lo entendido y seguimos por el primer paso sin responder.
