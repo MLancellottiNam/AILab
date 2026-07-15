@@ -76,10 +76,13 @@ function sdSyncProviderPreselect() {
 const sdSendTypeLabel = type => type ? t('sendtype.' + type) : null;
 
 /* ===== Tipo de firma → proveedor (selección AUTOMÁTICA, camino "quiero empezar") =====
-   El usuario NO elige el proveedor: lo decide el tipo de firma. La firma avanzada
-   (el nivel más alto) va a eSAW (fuerte en firma de alta garantía); el resto a
-   Signaturit (arranque más directo). Ver decisión de diseño en CLAUDE.md §6. */
-const SIG_TYPE_PROVIDER = { advanced: 'esaw', simple: 'signaturit', email: 'signaturit', sms: 'signaturit' };
+   El usuario NO elige el proveedor: lo decide el tipo de firma. El proveedor es
+   transparente para el cliente (no se le muestra).
+   DEMO: por detrás SIEMPRE llevamos todo a Signaturit — la generación de doc para
+   eSAW (campos AcroForm reales) todavía no está lista, así que el envío funciona
+   end-to-end solo con Signaturit. La firma "advanced" es un tipo de firma válido
+   en Signaturit (type=advanced), no un proveedor. (Antes: advanced → eSAW.) */
+const SIG_TYPE_PROVIDER = { advanced: 'signaturit', simple: 'signaturit', email: 'signaturit', sms: 'signaturit' };
 const PROVIDER_NAME = { signaturit: 'Signaturit', esaw: 'eSignAnywhere' };
 function sdPickSendType(el) {
   document.querySelectorAll('#s-sendtype .sd-sendtype').forEach(o => o.classList.remove('sel'));
