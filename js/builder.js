@@ -399,6 +399,14 @@ function sdbRenderPreview() {
 /* ========================================
    CONTRATO INTERNO (agnóstico del producto de firma)
    ======================================== */
+// ⚠ OJO al soldar el puente (bridge): las anclas de acá son TEXTO.
+//   - Signaturit: OK, coloca la firma por ancla de texto invisible.
+//   - eSAW: NO usa anclas de texto (confirmado contra sandbox). Necesita
+//     campos AcroForm reales (/FT /Sig). El PDF de html2pdf es plano, sin
+//     AcroForm → para destino eSAW hay que post-procesar el Blob e insertar
+//     los campos de firma (ej. pdf-lib) en la posición de cada ancla ANTES
+//     de mandarlo. Detalle en el encabezado de js/providers/esaw.js y en
+//     CLAUDE.md §4/§6.
 function sdbBuildDispatchDoc(row, pdfBlob) {
   return {
     pdf: pdfBlob,

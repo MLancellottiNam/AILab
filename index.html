@@ -346,7 +346,7 @@ No special format needed. You can write:
             </div>
           </div>
           <div class="sdb-banner" id="sdbAnchorBanner" style="display:none">
-            <b>Signature anchors detected.</b> They travel invisibly in the PDF; sending will pass them as anchors to the signature product (Signaturit / eSAW).
+            <b>Signature anchors detected.</b> For <b>Signaturit</b> they travel as invisible text anchors in the PDF. For <b>eSAW</b> this isn't enough: eSAW needs real AcroForm signature fields (<code>/FT /Sig</code>) — the bridge will inject them (e.g. with pdf-lib) at these anchor positions. See <code>js/providers/esaw.js</code>.
           </div>
         </div>
       </div>
