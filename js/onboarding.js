@@ -18,7 +18,7 @@ let fromSignup = false; // lo setea signup.js al volver del alta con el token
 const CRUMBS = {
   's-fork': 'Start', 's-client': 'Sign in', 's-quiz': 'Assistant', 's-signup': 'Your details',
   's-token': 'Your token', 's-plans': 'Plans', 's-pay': 'Payment', 's-done': 'Confirmation',
-  's-sendtype': 'Request type', 's-builder': 'PDF Builder'
+  's-provider': 'Provider', 's-sendtype': 'Request type', 's-builder': 'PDF Builder'
 };
 
 /* ===== Navegación con historial real (navStack) ===== */
@@ -33,6 +33,7 @@ function sdGo(id, push = true) {
   sd$('sdBack').style.display = navStack.length ? '' : 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (id === 's-quiz' && !sdChatLogEl().children.length) sdAskStep(0);
+  if (id === 's-provider') sdSyncProviderPreselect();
   if (id === 's-builder' && typeof sdbOnEnter === 'function') sdbOnEnter();
 }
 function goBack() {
@@ -48,6 +49,27 @@ document.addEventListener('keydown', e => {
 function sdPickOne(el) {
   el.parentElement.querySelectorAll('.sd-opt').forEach(o => o.classList.remove('sel'));
   el.classList.add('sel');
+}
+
+/* ===== Proveedor (Signaturit / eSAW) — alimenta el select cfg-provider
+   que ya lee app.js/startBulkSend. Se preselecciona con lo elegido antes. ===== */
+function sdPickProvider(el) {
+  document.querySelectorAll('#s-provider .sd-sendtype').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  ACC.provider = el.dataset.provider;
+  const sel = document.getElementById('cfg-provider');
+  if (sel) sel.value = ACC.provider; // <- la MISMA fuente que usa el envío del bulksend
+  sd$('sdProviderNext').disabled = false;
+}
+function sdContinueProvider() {
+  if (!ACC.provider) return;
+  sdGo('s-sendtype');
+}
+function sdSyncProviderPreselect() {
+  // Preseleccionar según el producto que ya eligió (chat o login de cliente)
+  const want = (ACC.product === 'esaw' || A.product === 'esaw') ? 'esaw' : 'signaturit';
+  const el = document.querySelector(`#s-provider .sd-sendtype[data-provider="${want}"]`);
+  if (el && !document.querySelector('#s-provider .sd-sendtype.sel')) sdPickProvider(el);
 }
 
 /* ===== Tipo de envío — REUSA operationType del bulksend (app.js) ===== */

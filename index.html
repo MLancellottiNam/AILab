@@ -195,7 +195,31 @@
       <h2 id="sdDoneTitle">All set!</h2>
       <p id="sdDoneSub"></p>
       <div class="sd-recap" id="sdRecap"></div>
-      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdGo('s-sendtype')">Continue →</button>
+      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdGo('s-provider')">Continue →</button>
+    </div>
+  </section>
+
+  <!-- 5a. PROVIDER (Signaturit / eSAW) — alimenta el provider del bulksend -->
+  <section class="sd-screen" id="s-provider">
+    <div class="sd-hero">
+      <h2>Choose your signature provider</h2>
+      <p>Where do you want to send your documents for signing?</p>
+    </div>
+    <div class="sd-sendtypes">
+      <div class="sd-sendtype" data-provider="signaturit" onclick="sdPickProvider(this)">
+        <div class="ic">🖋️</div>
+        <div class="tx"><h4>Signaturit <span class="sd-rec-tag">Recommended</span></h4><p>Text-anchor signing — ready today.</p></div>
+        <span class="sd-radio"></span>
+      </div>
+      <div class="sd-sendtype" data-provider="esaw" onclick="sdPickProvider(this)">
+        <div class="ic">📝</div>
+        <div class="tx"><h4>eSignAnywhere (eSAW)</h4><p>Real AcroForm signature fields — integration in progress.</p></div>
+        <span class="sd-radio"></span>
+      </div>
+    </div>
+    <div class="sd-nav">
+      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
+      <button class="sd-btn teal" id="sdProviderNext" disabled onclick="sdContinueProvider()">Continue →</button>
     </div>
   </section>
 
