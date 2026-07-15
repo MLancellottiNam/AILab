@@ -640,3 +640,17 @@ td { padding:8px 12px; border-bottom:1px solid var(--surface-2); max-width:200px
 .sdb-col-chip:hover { border-color:var(--sig-primary); background:#dbeeff; }
 .sdb-col-chip:active { cursor:grabbing; }
 .sdb-col-chip.sign { background:#fff0e8; color:var(--sig-orange); border-color:#ffd9c5; }
+
+/* ===== BUILDER — redactor asistido + card bloqueada ===== */
+.sdb-card.locked { opacity:.45; pointer-events:none; }
+.sdb-card.locked .sdb-locknote { display:block; }
+.sdb-locknote { font-size:12px; color:var(--sig-orange); background:#fff0e8; border:1px solid #ffd9c5; border-radius:8px; padding:9px 11px; margin-bottom:12px; }
+.sdb-lbl { display:block; font-size:12.5px; font-weight:600; color:var(--text); margin-bottom:6px; }
+.sdb-brief { width:100%; min-height:64px; border:1px solid var(--border); border-radius:9px; padding:10px 12px; font-size:13px; font-family:inherit; line-height:1.5; resize:vertical; background:var(--surface); color:var(--text); }
+.sdb-brief:focus { outline:none; border-color:var(--sig-primary); }
+.sdb-composer-controls { display:flex; gap:7px; margin-top:9px; flex-wrap:wrap; align-items:center; }
+.sdb-composer-controls select { border:1px solid var(--border); border-radius:7px; padding:7px 9px; font-size:12px; font-family:inherit; background:var(--surface); color:var(--text); }
+.sdb-compose-btn { margin-left:auto; font-size:13px; padding:8px 14px; }
+.sdb-compose-btn:disabled { opacity:.6; cursor:not-allowed; background:var(--surface-3); color:var(--text-muted); box-shadow:none; }
+.sdb-ai-disclaimer { font-size:11px; color:var(--text-muted); background:var(--bg); border:1px solid var(--border); border-left:3px solid var(--warning); border-radius:8px; padding:9px 11px; margin:11px 0; line-height:1.5; }
+.sdb-ai-disclaimer b { color:var(--text); }

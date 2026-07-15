@@ -62,70 +62,54 @@ function sdbOnEnter() {
   }
   iaBtn.disabled = true; // sin proxy todavía
 
-  // Botón "Detectar con IA" (paso 1) — mismo criterio, apagado hasta el proxy.
-  const detBtn = sdb$('sdbBtnDetectIA');
-  detBtn.disabled = true;
-  detBtn.textContent = acc.ia ? '✨ Detect with AI · coming soon' : '🔒 Detect with AI (Pro plan)';
+  // Redactor asistido (composeDoc): habilitado si el plan incluye IA.
+  // Hoy composeDoc es determinista (plantillas); cuando esté el proxy Claude
+  // pasa a ser la llamada real, y composeDoc queda de fallback.
+  const cb = sdb$('sdbComposeBtn');
+  if (acc.ia) { cb.disabled = false; cb.innerHTML = '✨ Draft with AI'; }
+  else { cb.disabled = true; cb.textContent = '🔒 AI drafting (Pro plan)'; }
+
+  // Card del documento: bloqueada hasta que haya datos cargados.
+  const rows = typeof dataRows !== 'undefined' ? dataRows : [];
+  if (rows.length) sdbUnlockDocCard(); else sdb$('sdbDocCard').classList.add('locked');
 
   sdbUpdQuota();
   sdbSyncColTray();
   sdbCheckReady();
 }
 
-/* ========================================
-   PASO 1 — Modo del documento (pestañas)
-   ======================================== */
-let sdbDocMode = 'upload';
-function sdbSetDocMode(m) {
-  sdbDocMode = m;
-  sdb$('sdbTabUpload').classList.toggle('on', m === 'upload');
-  sdb$('sdbTabWrite').classList.toggle('on', m === 'write');
-  sdb$('sdbModeUpload').style.display = m === 'upload' ? '' : 'none';
-  sdb$('sdbModeWrite').style.display = m === 'write' ? '' : 'none';
-  if (m === 'write') sdbSyncColTray();
+function sdbUnlockDocCard() {
+  sdb$('sdbDocCard').classList.remove('locked');
 }
 
-/* ---- Subir archivo (.docx / .txt) ---- */
+/* ---- Subir archivo (.docx / .txt) → cae en el mismo editor ---- */
 async function sdbHandleDoc(files) {
   const f = files && files[0];
   if (!f) return;
   const name = f.name.toLowerCase();
 
   if (name.endsWith('.txt')) {
-    const t = await f.text();
-    sdbSetDocMode('write');
-    sdb$('sdbDocEditor').value = t;
-    sdbNote('Text loaded. Detect the fields to continue.', 'ok');
+    sdb$('sdbDocEditor').value = await f.text();
+    sdbEditorLive();
+    sdbNote('Text loaded. If it uses ____ or [brackets], hit “Detect by patterns”.', 'ok');
     return;
   }
   if (!name.endsWith('.docx')) { alert('Upload a .docx or a .txt'); return; }
 
-  const label = sdb$('sdbDropDocLabel');
-  label.innerHTML = 'Processing…';
   try {
     const arrayBuffer = await f.arrayBuffer();
     const res = await mammoth.convertToHtml({ arrayBuffer });
-    builderState.docHtml = res.value;
-
-    const all = sdbExtractVars(builderState.docHtml);
-    if (!all.length) {
-      // Word sin {{variables}}: lo pasamos al editor para detectar por patrones
-      const plain = builderState.docHtml.replace(/<[^>]+>/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-      builderState.docHtml = '';
-      sdbSetDocMode('write');
-      sdb$('sdbDocEditor').value = plain;
-      sdbNote('Your document doesn\'t use <code>{{variables}}</code> — no problem. Detect the fields by patterns and we continue.', 'warn');
-      return;
+    const html = res.value;
+    const plain = html.replace(/<[^>]+>/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    sdb$('sdbDocEditor').value = plain;
+    const all = sdbExtractVars(html);
+    if (all.length) {
+      sdbEditorLive();
+      sdbNote(`Loaded <b>${sdbEsc(f.name)}</b> — ${all.length} variable(s) detected.`, 'ok');
+    } else {
+      sdbNote(`Loaded <b>${sdbEsc(f.name)}</b>. No <code>{{variables}}</code> — hit “Detect by patterns”.`, 'warn');
     }
-    sdbSplitVars(all);
-    sdb$('sdbDropDoc').classList.add('ok');
-    label.innerHTML = `✓ <b>${sdbEsc(f.name)}</b><br><span class="sdb-sub">${all.length} variable(s) detected</span>`;
-    sdbRenderVarChips();
-    sdbRenderPreview();
-    sdbCheckReady();
   } catch (err) {
-    sdb$('sdbDropDoc').classList.remove('ok');
-    label.innerHTML = 'Upload your <b>template.docx</b> or <b>.txt</b><br><span class="sdb-sub">with or without variables — we detect them for you</span>';
     alert('Error reading the document: ' + err.message);
   }
 }
@@ -250,6 +234,74 @@ function sdbApplyEditorText(txt) {
   sdbCheckReady();
 }
 
+/* ========================================
+   REDACTOR ASISTIDO — composeDoc (determinista, fallback sin IA)
+   La IA redacta FORMA, no contenido jurídico. Cuando esté el proxy Claude,
+   sdbCompose() pasa a llamarlo y composeDoc queda como fallback.
+   ======================================== */
+const SDB_I18N = {
+  es: { greeting: 'Estimado/a', details: 'Datos', closing: 'Saludos cordiales', signature: 'Firma', title: 'Documento' },
+  en: { greeting: 'Dear', details: 'Details', closing: 'Kind regards', signature: 'Signature', title: 'Document' },
+  pt: { greeting: 'Prezado/a', details: 'Dados', closing: 'Atenciosamente', signature: 'Assinatura', title: 'Documento' },
+  it: { greeting: 'Gentile', details: 'Dati', closing: 'Cordiali saluti', signature: 'Firma', title: 'Documento' },
+  fr: { greeting: 'Cher/Chère', details: 'Détails', closing: 'Cordialement', signature: 'Signature', title: 'Document' }
+};
+// Nota: cuidado con /id/ que matchea "apell(id)o" → usar \bid\b / _id$.
+const SDB_RX_NAME = /\bnombre\b|\bname\b|first[_\s]?name|\bfirst\b/i;
+const SDB_RX_LAST = /apellido|last[_\s]?name|surname|\blast\b/i;
+function sdbLabelize(h) {
+  return String(h).replace(/[_\-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase()).trim();
+}
+
+function composeDoc(brief, opts, headers) {
+  const T = SDB_I18N[opts.lang] || SDB_I18N.en;
+  const nameCol = headers.find(h => SDB_RX_NAME.test(h));
+  const lastCol = headers.find(h => SDB_RX_LAST.test(h));
+  const greetVars = [nameCol, lastCol].filter(Boolean).map(c => `{{${c}}}`).join(' ');
+  const dataCols = headers.filter(h => h !== nameCol && h !== lastCol);
+  const dataBlock = dataCols.map(h => `${sdbLabelize(h)}: {{${h}}}`).join('\n');
+
+  const words = brief.trim().split(/\s+/).filter(Boolean);
+  const isShort = words.length <= 40;
+  const lead = { formal: '', neutral: '', close: '', commercial: '' }; // el tono ya se refleja en greeting/closing
+  void lead; void opts.tone; void opts.length; // deterministas; el proxy real usará estos matices
+
+  if (isShort) {
+    // Redacta el documento entero a partir de la intención del usuario
+    return [
+      `${T.greeting}${greetVars ? ' ' + greetVars : ''},`,
+      '',
+      brief.trim(),
+      '',
+      `${T.details}:`,
+      dataBlock || '—',
+      '',
+      `${T.closing},`,
+      '',
+      `${T.signature}: {{sign}}`
+    ].join('\n');
+  }
+  // Documento largo pegado: respeta el texto, suma campos faltantes + firma
+  const parts = [brief.trim()];
+  if (dataBlock) parts.push('', `${T.details}:`, dataBlock);
+  parts.push('', `${T.signature}: {{sign}}`);
+  return parts.join('\n');
+}
+
+function sdbCompose() {
+  if (!sdbAcc().ia) return; // gated por plan (el botón ya está disabled igual)
+  const brief = sdb$('sdbBrief').value.trim();
+  if (!brief) { sdbNote('Write what you need to send first.', 'warn'); return; }
+  const headers = typeof dataHeaders !== 'undefined' ? dataHeaders : [];
+  const opts = { tone: sdb$('sdbTone').value, lang: sdb$('sdbLang').value, len: sdb$('sdbLen').value };
+  const text = composeDoc(brief, opts, headers);
+  sdb$('sdbDocEditor').value = text;
+  // Título de marca desde el idioma elegido (si el usuario no lo cambió)
+  if (!sdb$('sdbDocTitle').value.trim()) sdb$('sdbDocTitle').value = (SDB_I18N[opts.lang] || SDB_I18N.en).title;
+  sdbApplyEditorText(text);
+  sdbNote('✓ Draft ready. Edit anything, drag in columns, or generate. (The assistant writes form, not legal content.)', 'ok');
+}
+
 /* Editor en vivo: si ya hay {{variables}} en el texto, actualiza al instante.
    Si no (texto con ____ / [corchetes]), espera a "Detect by patterns". */
 function sdbEditorLive() {
@@ -333,6 +385,7 @@ function sdbOnDataLoaded(fileName, format) {
   sdb$('sdbDropData').classList.add('ok');
   sdb$('sdbDropDataLabel').innerHTML = `✓ <b>${sdbEsc(fileName)}</b> (${format})<br><span class="sdb-sub">${rows.length} rows · ${headers.length} columns</span>`;
   sdb$('sdbDataInfo').innerHTML = 'Columns: ' + headers.map(h => `<code>${sdbEsc(h)}</code>`).join(' ');
+  sdbUnlockDocCard(); // ya hay datos → habilitar el documento
   sdbUpdQuota();
   sdbSyncColTray();
   sdbRenderPreview();
@@ -520,8 +573,9 @@ function sdbInit() {
     sdbRenderPreview();
   });
 
-  ['sdbDropDoc', 'sdbDropData'].forEach(id => {
+  ['sdbDropData'].forEach(id => {
     const z = sdb$(id);
+    if (!z) return;
     z.addEventListener('dragover', e => { e.preventDefault(); z.classList.add('drag'); });
     z.addEventListener('dragleave', () => z.classList.remove('drag'));
     z.addEventListener('drop', e => {
