@@ -8,7 +8,7 @@
    - mammoth.convertToHtml (conserva formato).
    - Reusa el parseo de datos del bulksend (dataRows/dataHeaders globales).
    - Lee ACC (plan del onboarding): caja de IA, botón de IA, cuota y corte.
-   - Genera PDFs con html2pdf. Cero persistencia: todo en memoria.
+   - Genera PDFs con html2canvas + jsPDF. Cero persistencia: todo en memoria.
 
    Al generar, cada fila produce un DispatchDoc (contrato interno agnóstico
    del producto de firma; ver typedef en js/providers/signaturit.js).
@@ -683,7 +683,7 @@ function sdbBuildDocEl(row, idx) {
 
   // Bloque de firma estilizado: donde el redactor puso el ancla, dibujamos una
   // línea con caption. El texto del ancla queda invisible (para el envío) salvo
-  // que "reveal" esté activo. (Nota: el PDF de html2pdf es imagen; la extracción
+  // que "reveal" esté activo. (Nota: el PDF de html2canvas es imagen; la extracción
   // del ancla como texto la resuelve el puente de envío — pendiente aparte.)
   page.querySelectorAll('.sdb-sign-anchor').forEach(a => {
     const anchorText = a.getAttribute('data-anchor') || a.textContent || 'sign';
@@ -731,7 +731,7 @@ function sdbRenderPreview() {
 // ⚠ OJO al soldar el puente (bridge): las anclas de acá son TEXTO.
 //   - Signaturit: OK, coloca la firma por ancla de texto invisible.
 //   - eSAW: NO usa anclas de texto (confirmado contra sandbox). Necesita
-//     campos AcroForm reales (/FT /Sig). El PDF de html2pdf es plano, sin
+//     campos AcroForm reales (/FT /Sig). El PDF de html2canvas es plano, sin
 //     AcroForm → para destino eSAW hay que post-procesar el Blob e insertar
 //     los campos de firma (ej. pdf-lib) en la posición de cada ancla ANTES
 //     de mandarlo. Detalle en el encabezado de js/providers/esaw.js y en
@@ -748,7 +748,7 @@ function sdbBuildDispatchDoc(row, pdfBlob) {
 }
 
 /* ========================================
-   PASO 4 — Generación (html2pdf, un PDF por fila, corte por ACC.limit)
+   PASO 4 — Generación (html2canvas + jsPDF, un PDF por fila, corte por ACC.limit)
    ======================================== */
 function sdbCheckReady() {
   const rows = typeof dataRows !== 'undefined' ? dataRows : [];
@@ -763,10 +763,53 @@ function sdbCheckReady() {
   }
 }
 
+/* Convierte un nodo del DOM (ya montado y pintado) en un Blob PDF.
+   Reemplaza a html2pdf, que generaba PDFs vacíos porque su "bundle"
+   no incluía html2canvas. */
+async function sdbNodeToPdfBlob(el) {
+  if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+    throw new Error('Faltan html2canvas o jsPDF. Revisá los <script> del index.html.');
+  }
+
+  const canvas = await html2canvas(el, {
+    scale: 2,
+    backgroundColor: '#ffffff',
+    useCORS: true,
+    logging: false,
+    windowWidth: 794   // fija el viewport: sin esto el layout cambia en pantallas chicas
+  });
+
+  const { jsPDF } = jspdf;
+  const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait' });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const imgH = canvas.height * pageW / canvas.width;
+  const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+  if (imgH <= pageH) {
+    pdf.addImage(imgData, 'JPEG', 0, 0, pageW, imgH);
+  } else {
+    // multipágina: se desplaza la misma imagen y se recorta por página
+    let rest = imgH, y = 0;
+    while (rest > 0) {
+      pdf.addImage(imgData, 'JPEG', 0, y, pageW, imgH);
+      rest -= pageH; y -= pageH;
+      if (rest > 0) pdf.addPage();
+    }
+  }
+  return pdf.output('blob');
+}
+
 async function sdbGenerate() {
   const rows = typeof dataRows !== 'undefined' ? dataRows : [];
   if (!builderState.docHtml || !rows.length) return;
   const acc = sdbAcc();
+
+  // Chequeo defensivo: si un CDN falló, mostramos el motivo en vez de PDFs vacíos.
+  if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+    sdb$('sdbResults').innerHTML = '<div class="sdb-banner">No se pudieron cargar las librerías de PDF. Revisá la conexión.</div>';
+    return;
+  }
 
   const btn = sdb$('sdbGenBtn');
   btn.disabled = true;
@@ -810,20 +853,23 @@ async function sdbGenerate() {
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
       const fname = `${sdbSlug(title)}_${sdbSlug(String((nameKey && row[nameKey]) || ('doc_' + (i + 1))))}.pdf`;
-      const opts = {
-        margin: 0, filename: fname,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'pt', format: 'a4' }
-      };
 
-      const blob = await html2pdf().set(opts).from(el).outputPdf('blob');
-      sdbDownload(blob, fname);
+      // El nodo `el` ya está pintado dentro del overlay visible (rhold) → captura fiable.
+      const blob = await sdbNodeToPdfBlob(el);
+      // Cero persistencia: el blob queda en memoria (dispatchDocs) y de ahí lo
+      // toma el puente para enviar. La descarga a disco es opcional ("Download a copy").
       builderState.dispatchDocs.push(sdbBuildDispatchDoc(row, blob));
 
       const it = document.createElement('div');
       it.className = 'sdb-result-item';
       it.innerHTML = `<span class="sdb-dot"></span><span class="sdb-fname">${sdbEsc(fname)}</span><span class="sdb-badge">generated</span>`;
+      // Acción opcional: descargar una copia (nunca en el camino principal).
+      const dl = document.createElement('button');
+      dl.className = 'sdb-dl-copy';
+      dl.type = 'button';
+      dl.textContent = 'Download a copy';
+      dl.onclick = () => sdbDownload(blob, fname);
+      it.appendChild(dl);
       sdb$('sdbResults').appendChild(it);
       await new Promise(r => setTimeout(r, 110));
     }
@@ -834,7 +880,7 @@ async function sdbGenerate() {
   const done = document.createElement('div');
   done.className = 'sdb-done';
   const skipped = rows.length - n;
-  done.textContent = `✓ ${n} PDF(s) generated and downloaded.` + (skipped > 0 ? ` (${skipped} beyond the plan limit)` : '');
+  done.textContent = `✓ ${n} PDF(s) ready — in memory, not saved to disk.` + (skipped > 0 ? ` (${skipped} beyond the plan limit)` : '');
   sdb$('sdbResults').appendChild(done);
   btn.disabled = false;
 
