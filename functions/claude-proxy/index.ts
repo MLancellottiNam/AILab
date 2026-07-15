@@ -50,8 +50,8 @@ Campos:
 - vol: "low" (hasta ~100), "mid" (~100 a 1000), "high" (más de 1000).
 - ia: "yes" si quiere que la IA arme los documentos, "no" si prefiere manual.
 - team: "1" (solo él), "few" (2 a 5), "many" (más de 5).
-- reply: una frase breve y cálida (en el idioma del cliente) confirmando lo que entendiste. Sin markdown.
-- clarify: si NO entendiste nada útil, una pregunta breve para guiarlo; si entendiste algo, null.`;
+- reply: una frase breve y cálida, EN EL MISMO IDIOMA en que escribió el cliente (si escribió en español, respondé en español), que confirme y recomiende el tipo de firma que mejor le encaja y por qué. NUNCA menciones el proveedor: no nombres "Signaturit" ni "eSAW"/"eSignAnywhere" — para el cliente es transparente. Sin markdown.
+- clarify: si NO entendiste nada útil, una pregunta breve (en el idioma del cliente) para guiarlo; si entendiste algo, null.`;
 
 // Schema de salida: todos los campos requeridos y nullable (structured outputs
 // exige additionalProperties:false + required con todas las claves). Los enums

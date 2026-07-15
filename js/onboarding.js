@@ -15,12 +15,6 @@ const ACC = { plan: null, ia: false, limit: Infinity, oneshot: false, isClient: 
 const isOneShot = () => A.freq === 'oneshot' || A.freq === 'sometimes';
 let fromSignup = false; // lo setea signup.js al volver del alta con el token
 
-const CRUMBS = {
-  's-fork': 'Start', 's-client': 'Sign in', 's-quiz': 'Assistant', 's-signup': 'Your details',
-  's-token': 'Your token', 's-plans': 'Plans', 's-pay': 'Payment', 's-done': 'Confirmation',
-  's-sendtype': 'Request type', 's-builder': 'PDF Builder'
-};
-
 /* ===== Navegación con historial real (navStack) ===== */
 let navStack = [];
 let currentScreen = 's-fork';
@@ -29,7 +23,7 @@ function sdGo(id, push = true) {
   currentScreen = id;
   document.querySelectorAll('.sd-screen').forEach(s => s.classList.remove('on'));
   sd$(id).classList.add('on');
-  sd$('sdCrumb').textContent = CRUMBS[id] || '';
+  sd$('sdCrumb').textContent = t('crumb.' + id);
   sd$('sdBack').style.display = navStack.length ? '' : 'none';
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (id === 's-quiz' && !sdChatLogEl().children.length) sdAskStep(0);
@@ -51,7 +45,7 @@ function sdPickOne(el) {
 }
 
 /* ===== Tipo de envío — REUSA operationType del bulksend (app.js) ===== */
-const SD_SENDTYPE_LABEL = { advanced: 'Advanced signature', simple: 'Simple signature', email: 'Certified email', sms: 'Certified SMS' };
+const sdSendTypeLabel = type => type ? t('sendtype.' + type) : null;
 
 /* ===== Tipo de firma → proveedor (selección AUTOMÁTICA, camino "quiero empezar") =====
    El usuario NO elige el proveedor: lo decide el tipo de firma. La firma avanzada
@@ -68,7 +62,7 @@ function sdPickSendType(el) {
   const note = sd$('sdSendTypeNote');
   if (operationType === 'sms') {
     note.style.display = 'block';
-    note.innerHTML = '📱 Certified SMS has no document to build, so it skips the PDF Builder. It goes straight to sending — available once the builder→send bridge is connected.';
+    note.innerHTML = t('sendtype.smsNote');
   } else {
     note.style.display = 'none';
   }
@@ -77,7 +71,7 @@ function sdContinueSendType() {
   if (!operationType) return;
   if (operationType === 'sms') {
     // SMS no tiene documento → saltea el builder. El envío se conecta con el puente.
-    alert('Certified SMS skips the PDF Builder. Sending will be available when the bridge is connected.');
+    alert(t('sendtype.smsAlert'));
     return;
   }
   sdEnterBuilder(); // advanced / simple / email → builder
@@ -89,7 +83,7 @@ function sdContinueSendType() {
 function sdAfterDone() {
   if (operationType) {
     if (operationType === 'sms') {
-      alert('Certified SMS skips the PDF Builder. Sending will be available when the bridge is connected.');
+      alert(t('sendtype.smsAlert'));
       return;
     }
     sdEnterBuilder();
@@ -103,88 +97,63 @@ function sdAfterDone() {
 const FLOW = [
   {
     key: 'sigType',
-    bot: 'Hi! I\'m the Smart Dispatch assistant 👋<br><br>I\'ll help you find the plan that fits you. First: <b>what kind of signature do you need?</b><br><br><i>Not sure? Pick the closest one — I\'ll explain what each means.</i>',
-    opts: [
-      { label: 'Advanced signature', v: 'advanced' },
-      { label: 'Simple signature', v: 'simple' },
-      { label: 'Certified email', v: 'email' },
-      { label: 'Certified SMS', v: 'sms' }
+    bot: () => t('chat.q.sigType'),
+    opts: () => [
+      { label: t('chat.opt.advanced'), v: 'advanced' },
+      { label: t('chat.opt.simple'), v: 'simple' },
+      { label: t('chat.opt.email'), v: 'email' },
+      { label: t('chat.opt.sms'), v: 'sms' }
     ],
-    info: (v) => ({
-      advanced: '<b>Advanced signature.</b> The signer is uniquely identified — with biometrics or a digital certificate. It\'s the strongest, most legally robust option, ideal for contracts and important agreements.',
-      simple: '<b>Simple signature.</b> Sign with a single click. Fast and frictionless — great for internal approvals or low-risk documents.',
-      email: '<b>Certified email.</b> Sends your document with legal proof of delivery and content. No signature needed — you just want evidence that it was sent and received.',
-      sms: '<b>Certified SMS.</b> A certified text message with legal proof of delivery, for short notices sent to a phone number.'
-    }[v]),
-    reply: (v) => ({ advanced: 'Advanced signature', simple: 'Simple signature', email: 'Certified email', sms: 'Certified SMS' }[v])
+    info: (v) => t('chat.info.' + v),
+    reply: (v) => t('chat.reply.' + v)
   },
   {
     key: 'freq',
-    bot: 'Perfect. Before sizing: <b>is this something you\'ll do regularly, or a one-off send?</b>',
-    opts: [
-      { label: 'Every month', v: 'monthly' },
-      { label: 'Just once', v: 'oneshot' },
-      { label: 'Now and then', v: 'sometimes' }
+    bot: () => t('chat.q.freq'),
+    opts: () => [
+      { label: t('chat.opt.monthly'), v: 'monthly' },
+      { label: t('chat.opt.oneshot'), v: 'oneshot' },
+      { label: t('chat.opt.sometimes'), v: 'sometimes' }
     ],
-    info: (v) => {
-      if (v === 'monthly') return 'Then a monthly-quota plan suits you: build the template once and reuse it every month.';
-      if (v === 'oneshot') return '<b>No need to subscribe to anything.</b> We have <b>one-time packs</b>: you pay for the batch, send it and you\'re done. No account, no renewal.';
-      return '<b>A one-time pack works for you</b>: packs don\'t expire, so you use it when you need it.';
-    },
-    reply: (v) => ({ monthly: 'Every month', oneshot: 'Just once', sometimes: 'Now and then' }[v])
+    info: (v) => t('chat.info.' + v),
+    reply: (v) => t('chat.reply.' + v)
   },
   {
     key: 'vol',
-    bot: () => isOneShot()
-      ? 'Good. <b>How many documents do you need to send in this batch?</b><br><br><i>Minimum is 10 sends.</i>'
-      : 'Perfect. To size it: <b>how many documents do you send to sign per month?</b>',
-    opts: () => isOneShot()
-      ? [{ label: '10 to 100', v: 'low' }, { label: '100 to 500', v: 'mid' }, { label: 'More than 500', v: 'high' }]
-      : [{ label: 'Up to 100', v: 'low' }, { label: '100 to 1,000', v: 'mid' }, { label: 'More than 1,000', v: 'high' }],
-    info: (v) => {
-      if (isOneShot()) {
-        if (v === 'low') return 'The <b>Small Pack</b> covers you. Build the template, cross it with your spreadsheet and send.';
-        if (v === 'mid') return 'The <b>Medium Pack</b>. At that volume, building documents by hand takes hours: here you do it in minutes.';
-        return 'The <b>Large Pack</b>. Heads up: if this repeats more than twice, a monthly plan is cheaper. Telling you anyway, even if it doesn\'t suit me 😅';
-      }
-      if (v === 'low') return 'At that volume, most people start <b>for free</b>. No need to pay until you grow.';
-      if (v === 'mid') return 'That\'s the range where manual work starts to hurt: <b>~2 minutes per document</b> is over 30 hours a month.';
-      return 'High volume. At that scale, every minute you save per document is <b>days of work per year</b>. You\'ll also want to connect your CRM.';
+    bot: () => isOneShot() ? t('chat.q.vol.oneshot') : t('chat.q.vol.monthly'),
+    opts: () => {
+      const m = isOneShot() ? 'oneshot' : 'monthly';
+      return [
+        { label: t('chat.opt.vol.low.' + m), v: 'low' },
+        { label: t('chat.opt.vol.mid.' + m), v: 'mid' },
+        { label: t('chat.opt.vol.high.' + m), v: 'high' }
+      ];
     },
-    reply: (v) => isOneShot()
-      ? ({ low: 'Between 10 and 100', mid: 'Between 100 and 500', high: 'More than 500' }[v])
-      : ({ low: 'Up to 100 per month', mid: 'Between 100 and 1,000', high: 'More than 1,000' }[v])
+    info: (v) => t('chat.info.vol.' + v + '.' + (isOneShot() ? 'oneshot' : 'monthly')),
+    reply: (v) => t('chat.reply.vol.' + v + '.' + (isOneShot() ? 'oneshot' : 'monthly'))
   },
   {
     key: 'ia',
-    bot: 'Got it. One that matters a lot: <b>do you want the AI to build the documents for you?</b><br><br>The AI reads your document, decides where each signature field goes and applies your brand. You confirm. <i>Without AI, everything still works — you just do it by hand.</i>',
-    opts: [
-      { label: 'Yes, let the AI do it', v: 'yes' },
-      { label: 'I prefer manual', v: 'no' },
-      { label: 'What does it do exactly?', v: 'explain' }
+    bot: () => t('chat.q.ia'),
+    opts: () => [
+      { label: t('chat.opt.ia.yes'), v: 'yes' },
+      { label: t('chat.opt.ia.no'), v: 'no' },
+      { label: t('chat.opt.ia.explain'), v: 'explain' }
     ],
-    info: (v) => {
-      if (v === 'yes') return '<b>Nice.</b> The AI pre-fills for you: it places the fields, pulls the colors from your brand book and maps your spreadsheet columns. You always have the last word.';
-      if (v === 'no') return '<b>Perfect, and it\'s free.</b> Manual mode does everything the same: load the document, place the fields, cross the spreadsheet. The AI just saves you clicks.';
-      return null; // caso especial "explain"
-    },
-    reply: (v) => ({ yes: 'Yes, I want the AI', no: 'I prefer to do it manually', explain: 'What does it do exactly?' }[v])
+    info: (v) => (v === 'explain' ? null : t('chat.info.ia.' + v)),
+    reply: (v) => t('chat.reply.ia.' + v)
   },
   {
     key: 'team',
     skipIf: () => isOneShot(),
-    bot: 'And to wrap up — is this just for you, or would you like access for others on your team too?',
-    opts: [
-      { label: 'Just for me', v: '1' },
-      { label: 'A few of us', v: 'few' },
-      { label: 'My whole team', v: 'many' }
+    bot: () => t('chat.q.team'),
+    opts: () => [
+      { label: t('chat.opt.team.1'), v: '1' },
+      { label: t('chat.opt.team.few'), v: 'few' },
+      { label: t('chat.opt.team.many'), v: 'many' }
     ],
-    info: (v) => {
-      if (v === '1') return 'A single seat, all set. You can always add teammates later.';
-      if (v === 'few') return 'We\'ll set up a few seats. Everyone shares the same templates and brand, so documents come out consistent.';
-      return 'Access for the whole team. At that size it\'s worth having centralized templates so nobody sends an off-brand document.';
-    },
-    reply: (v) => ({ '1': 'Just for me', few: 'A few of us', many: 'My whole team' }[v])
+    info: (v) => t('chat.info.team.' + v),
+    reply: (v) => t('chat.reply.team.' + v)
   }
 ];
 
@@ -237,7 +206,7 @@ function sdAskStep(i) {
     sdAddBot(typeof st.bot === 'function' ? st.bot() : st.bot);
     const total = FLOW.filter(s => !(s.skipIf && s.skipIf())).length;
     const idx = FLOW.slice(0, i + 1).filter(s => !(s.skipIf && s.skipIf())).length;
-    sd$('sdChatProgress').textContent = `${idx} of ${total}`;
+    sd$('sdChatProgress').textContent = t('chat.progress', { i: idx, total });
     const opts = typeof st.opts === 'function' ? st.opts() : st.opts;
     sdSetChips(opts, (o) => sdHandlePick(st, o));
   }, 650);
@@ -252,12 +221,12 @@ function sdHandlePick(st, o) {
     sdTyping(true);
     setTimeout(() => {
       sdTyping(false);
-      sdAddBot('Let me show you with a real example 👇');
+      sdAddBot(t('chat.ia.exampleIntro'));
       setTimeout(() => {
-        sdAddInfo('<b>Without AI:</b> you open the document, write <code>{{sign}}</code> where the signature goes, pick your color by hand and map each spreadsheet column.<br><br><b>With AI:</b> you upload the document and your brand book. The AI detects that the signature goes at the end, pulls your corporate color from the brand book and maps the columns itself. You review and confirm.<br><br>The difference is time, not capability: <b>both paths reach the same PDF</b>.');
+        sdAddInfo(t('chat.ia.example'));
         setTimeout(() => {
-          sdAddBot('So?');
-          sdSetChips([{ label: 'Yes, I want the AI', v: 'yes' }, { label: 'I prefer manual', v: 'no' }], (o2) => sdHandlePick(st, o2));
+          sdAddBot(t('chat.ia.so'));
+          sdSetChips([{ label: t('chat.opt.ia.yes'), v: 'yes' }, { label: t('chat.opt.ia.no'), v: 'no' }], (o2) => sdHandlePick(st, o2));
         }, 700);
       }, 500);
     }, 700);
@@ -266,19 +235,14 @@ function sdHandlePick(st, o) {
 
   A[st.key] = o.v;
 
-  // Tipo de firma: fija operationType + asigna proveedor (helper compartido).
+  // Tipo de firma: fija operationType y asigna el proveedor INTERNAMENTE. El
+  // proveedor es transparente para el cliente — NO se menciona en el onboarding;
+  // recién al final del envío se le dice por dónde se envió y cómo hacer seguimiento.
   if (st.key === 'sigType') sdSetSigType(o.v);
 
+  // El 💡 explica el tipo de firma (recomendado), no el proveedor.
   const info = st.info(o.v);
   if (info) setTimeout(() => sdAddInfo(info), 400);
-
-  // Para el tipo de firma, además de explicarlo mostramos la asignación de
-  // proveedor (+ aviso si es eSAW, cuyo builder todavía está en integración).
-  if (st.key === 'sigType') {
-    setTimeout(() => sdAddInfo(sdProviderMsg(SIG_TYPE_PROVIDER[o.v])), 1000);
-    setTimeout(() => { chatStep++; sdAskStep(chatStep); }, 1900);
-    return;
-  }
 
   setTimeout(() => { chatStep++; sdAskStep(chatStep); }, info ? 1100 : 500);
 }
@@ -293,12 +257,6 @@ function sdSetSigType(v) {
   A.product = prov;           // signup.js lee A.product
   ACC.product = prov;
   return prov;
-}
-
-function sdProviderMsg(prov) {
-  return prov === 'esaw'
-    ? 'Advanced signatures run on <b>eSignAnywhere</b>, our provider for higher-assurance signing — we set that up for you, no need to choose.<br><br><i>Heads up: document generation for eSignAnywhere is still being wired up, so you can finish onboarding now and sending will follow shortly.</i>'
-    : 'We\'ll set you up on <b>Signaturit</b> — the quickest way to start with this signature type. No need to pick a provider: we choose the best fit for you.';
 }
 
 /* ============ TEXTO LIBRE (chat conversacional real) ============
@@ -325,13 +283,13 @@ async function sdSubmitText(e) {
 
   if (!applied.length) {
     // No entendimos nada → guiar con el paso actual.
-    sdAddBot('I didn\'t quite catch that 🤔 — let me guide you. Pick the option that fits best:');
+    sdAddBot(t('chat.notUnderstood'));
     return sdAskStep(chatStep);
   }
 
   // Confirmamos lo entendido y seguimos por el primer paso sin responder.
   if (intent.reply) sdAddBot(intent.reply);
-  else sdAddBot('Got it 👍');
+  else sdAddBot(t('chat.gotIt'));
   sdAdvanceFromIntent();
 }
 
@@ -342,7 +300,7 @@ function sdApplyIntent(intent) {
   const applied = [];
   order.forEach(k => {
     if (intent[k] == null) return;
-    if (k === 'sigType') { sdSetSigType(intent[k]); setTimeout(() => sdAddInfo(sdProviderMsg(SIG_TYPE_PROVIDER[intent[k]])), 500); }
+    if (k === 'sigType') sdSetSigType(intent[k]); // proveedor interno, transparente para el cliente
     else A[k] = intent[k];
     applied.push(k);
   });
@@ -369,12 +327,12 @@ function sdFinishChat() {
     const rec = recommend();
     const C = catalog();
     sdAddBot(isOneShot()
-      ? `Done 🎯 No need to subscribe: based on what you told me, the <b>${C[rec].name}</b> fits you. Pay once and you're set.`
-      : `Done 🎯 Based on what you told me, the plan that fits you is <b>${C[rec].name}</b>.<br><br>Here are the options so you can compare.`);
+      ? t('chat.done.pack', { name: C[rec].name })
+      : t('chat.done.plan', { name: C[rec].name }));
     sdChatActsEl().innerHTML = '';
     const b = document.createElement('button');
     b.className = 'sd-btn primary'; b.style.cssText = 'width:100%;justify-content:center';
-    b.textContent = isOneShot() ? 'See the packs →' : 'See my plan →';
+    b.textContent = isOneShot() ? t('chat.seePacks') : t('chat.seePlan');
     b.onclick = sdComputePlan;
     sdChatActsEl().appendChild(b);
   }, 800);
@@ -403,14 +361,12 @@ function sdEnterAsClient() {
 }
 
 function sdRenderClientDone() {
-  const mask = t => t ? (t.slice(0, 12) + '…') : '••••';
-  sd$('sdDoneTitle').textContent = ACC.isClient ? 'Session started' : 'You\'re all set!';
-  sd$('sdDoneSub').textContent = ACC.isClient
-    ? 'Your token is loaded in this session. It was not stored anywhere.'
-    : `Your ${ACC.plan} account is ready. The token lives only in this session.`;
+  const mask = tok => tok ? (tok.slice(0, 12) + '…') : '••••';
+  sd$('sdDoneTitle').textContent = ACC.isClient ? t('done.title.client') : t('done.title.new');
+  sd$('sdDoneSub').textContent = ACC.isClient ? t('done.sub.client') : t('done.sub.new', { plan: ACC.plan });
   sd$('sdRecap').innerHTML = `
-    <div class="r"><span>${ACC.isClient ? 'Type' : 'Plan'}</span><span>${ACC.isClient ? 'Existing customer' : ACC.plan}${ACC.ia ? '<span class="sd-badge-ia">AI</span>' : ''}</span></div>
-    <div class="r"><span>Token</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${mask(ACC.token)} · in memory</span></div>
-    <div class="r"><span>Persistence</span><span style="color:var(--success)">None</span></div>
-    <div class="r"><span>AI layer</span><span style="color:${ACC.ia ? 'var(--success)' : 'var(--text-muted)'}">${ACC.ia ? 'Enabled' : 'Manual mode'}</span></div>`;
+    <div class="r"><span>${ACC.isClient ? t('recap.type') : t('recap.plan')}</span><span>${ACC.isClient ? t('recap.existingCustomer') : ACC.plan}${ACC.ia ? '<span class="sd-badge-ia">AI</span>' : ''}</span></div>
+    <div class="r"><span>${t('recap.token')}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${mask(ACC.token)} · ${t('recap.inMemory')}</span></div>
+    <div class="r"><span>${t('recap.persistence')}</span><span style="color:var(--success)">${t('recap.none')}</span></div>
+    <div class="r"><span>${t('recap.aiLayer')}</span><span style="color:${ACC.ia ? 'var(--success)' : 'var(--text-muted)'}">${ACC.ia ? t('recap.enabled') : t('recap.manual')}</span></div>`;
 }

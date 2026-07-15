@@ -3,34 +3,32 @@
    --------------------------------------------
    Recomienda plan/pack según las respuestas del chat (A), simula el pago y
    escribe el estado en ACC. Ese ACC es el que condiciona el builder.
-   (UI en inglés; comentarios internos en español.)
+   Textos vía i18n (t()); nombres de plan (Starter/Pro/Enterprise) son de marca
+   y no se traducen; los packs sí (pack.name.*).
    ============================================ */
 
 const PACKS = {
-  small:  { name: 'Small Pack',  for: 'A one-off send',        price: 19,  priceLabel: '€19',  limit: 100,  oneshot: true,
-    note: 'Up to 100 documents · one-time payment',
-    feats: [['PDF generator from Word/TXT', 1], ['Data from CSV, JSON, XLSX', 1], ['Bulk send with your token', 1], ['No subscription or renewal', 1], ['The pack never expires', 1], ['AI layer', 0]] },
-  medium: { name: 'Medium Pack', for: 'One large batch, once', price: 49,  priceLabel: '€49',  limit: 500,  oneshot: true,
-    note: 'Up to 500 documents · one-time payment',
-    feats: [['Everything in the Small Pack', 1], ['Up to 500 documents', 1], ['AI: places the fields for you', 1], ['AI: applies your brand book', 1], ['No subscription or renewal', 1], ['The pack never expires', 1]] },
-  large:  { name: 'Large Pack',  for: 'High volume, one-off',  price: 99,  priceLabel: '€99',  limit: 2000, oneshot: true,
-    note: 'Up to 2,000 documents · one-time payment',
-    feats: [['Everything in the Medium Pack', 1], ['Up to 2,000 documents', 1], ['Full AI', 1], ['Support during the send', 1], ['No subscription or renewal', 1], ['The pack never expires', 1]] }
+  small:  { nameKey: 'pack.name.small',  forKey: 'pack.for.small',  price: 19,  priceLabel: '€19',  limit: 100,  oneshot: true, noteKey: 'pack.note.small',
+    feats: [['feat.pdfGen', 1], ['feat.data', 1], ['feat.bulk', 1], ['feat.noSub', 1], ['feat.neverExpires', 1], ['feat.ai', 0]] },
+  medium: { nameKey: 'pack.name.medium', forKey: 'pack.for.medium', price: 49,  priceLabel: '€49',  limit: 500,  oneshot: true, noteKey: 'pack.note.medium',
+    feats: [['feat.everythingSmall', 1], ['feat.upTo500', 1], ['feat.aiFields', 1], ['feat.aiBrand', 1], ['feat.noSub', 1], ['feat.neverExpires', 1]] },
+  large:  { nameKey: 'pack.name.large',  forKey: 'pack.for.large',  price: 99,  priceLabel: '€99',  limit: 2000, oneshot: true, noteKey: 'pack.note.large',
+    feats: [['feat.everythingMedium', 1], ['feat.upTo2000', 1], ['feat.fullAi', 1], ['feat.supportSend', 1], ['feat.noSub', 1], ['feat.neverExpires', 1]] }
 };
 
 const PLANS = {
-  starter:    { name: 'Starter',    for: 'To get started solo',        price: 0,   priceLabel: 'Free', limit: 100,
-    note: 'Up to 100 documents per month',
-    feats: [['PDF generator from Word/TXT', 1], ['Data from CSV, JSON, XLSX', 1], ['Manual field placement', 1], ['Bulk send with your token', 1], ['AI layer', 0], ['Multi-user', 0]] },
-  pro:        { name: 'Pro',        for: 'For teams that send often',  price: 49,  priceLabel: '€49',  limit: 1000,
-    note: 'Up to 1,000 documents per month',
-    feats: [['Everything in Starter', 1], ['AI: places the fields for you', 1], ['AI: automatic data mapping', 1], ['AI: applies your brand book', 1], ['Up to 5 users', 1], ['Priority support', 0]] },
-  enterprise: { name: 'Enterprise', for: 'High volume, multiple teams', price: 199, priceLabel: '€199', limit: Infinity,
-    note: 'Unlimited documents',
-    feats: [['Everything in Pro', 1], ['Unlimited documents', 1], ['Unlimited users', 1], ['CRM integration', 1], ['Dedicated support + SLA', 1], ['Assisted onboarding', 1]] }
+  starter:    { name: 'Starter',    forKey: 'plan.for.starter',    price: 0,   priceLabel: '€0',   limit: 100,      noteKey: 'plan.note.starter',
+    feats: [['feat.pdfGen', 1], ['feat.data', 1], ['feat.manualPlace', 1], ['feat.bulk', 1], ['feat.ai', 0], ['feat.multiUser', 0]] },
+  pro:        { name: 'Pro',        forKey: 'plan.for.pro',        price: 49,  priceLabel: '€49',  limit: 1000,     noteKey: 'plan.note.pro',
+    feats: [['feat.everythingStarter', 1], ['feat.aiFields', 1], ['feat.aiMapping', 1], ['feat.aiBrand', 1], ['feat.upTo5Users', 1], ['feat.prioritySupport', 0]] },
+  enterprise: { name: 'Enterprise', forKey: 'plan.for.enterprise', price: 199, priceLabel: '€199', limit: Infinity, noteKey: 'plan.note.enterprise',
+    feats: [['feat.everythingPro', 1], ['feat.unlimitedDocs', 1], ['feat.unlimitedUsers', 1], ['feat.crm', 1], ['feat.dedicatedSupport', 1], ['feat.assistedOnboarding', 1]] }
 };
 
 const catalog = () => isOneShot() ? PACKS : PLANS;
+// Nombre a mostrar: plans usan marca (name); packs se traducen (nameKey).
+const planName = p => p.name || t(p.nameKey);
+const priceText = p => p.price === 0 ? t('price.free') : p.priceLabel;
 
 function recommend() {
   if (isOneShot()) {
@@ -44,17 +42,16 @@ function recommend() {
 }
 
 function whyText(k) {
-  // Proveedor asignado según el tipo de firma (ver SIG_TYPE_PROVIDER en onboarding.js)
-  const b = [(typeof PROVIDER_NAME !== 'undefined' && PROVIDER_NAME[ACC.product]) || 'Signaturit'];
-  if (isOneShot()) b.push(A.freq === 'oneshot' ? 'a one-off send' : 'occasional use');
-  if (A.vol === 'low') b.push('low volume');
-  if (A.vol === 'mid') b.push('medium volume');
-  if (A.vol === 'high') b.push('high volume');
-  b.push(A.ia === 'yes' ? 'you want the AI layer' : 'you prefer manual mode');
-  if (A.team === '1') b.push('individual use');
-  if (A.team === 'few') b.push('team of up to 5');
-  if (A.team === 'many') b.push('more than 5 people');
-  return `You told us: ${b.join(' · ')}. That's why we recommend <b>${catalog()[k].name}</b>.`;
+  // Arrancamos con el TIPO DE FIRMA recomendado (el proveedor es transparente
+  // para el cliente y no se menciona acá).
+  const b = [];
+  const st = sdSendTypeLabel(ACC.sendType);
+  if (st) b.push(st);
+  if (isOneShot()) b.push(A.freq === 'oneshot' ? t('why.oneshot') : t('why.occasional'));
+  if (A.vol) b.push(t('why.vol.' + A.vol));
+  b.push(A.ia === 'yes' ? t('why.ia.yes') : t('why.ia.no'));
+  if (A.team) b.push(t('why.team.' + A.team));
+  return t('why.text', { list: b.join(' · '), name: planName(catalog()[k]) });
 }
 
 function sdComputePlan() {
@@ -63,17 +60,20 @@ function sdComputePlan() {
   box.innerHTML = '';
   Object.entries(catalog()).forEach(([key, p]) => {
     const isRec = key === rec;
+    const name = planName(p);
+    const suffix = p.price ? (p.oneshot ? `<small> ${t('price.oneTime')}</small>` : `<small>${t('price.perMo')}</small>`) : '';
+    const btn = p.price === 0 ? t('plan.startFree') : (p.oneshot ? t('plan.buy', { name }) : t('plan.choose', { name }));
     const el = document.createElement('div');
     el.className = 'sd-plan' + (isRec ? ' rec' : '');
-    el.innerHTML = `${isRec ? '<div class="tag">Recommended for you</div>' : ''}
-      <h3>${p.name}</h3><div class="for">${p.for}</div>
-      <div class="price">${p.priceLabel}${p.price ? (p.oneshot ? '<small> one-time</small>' : '<small>/mo</small>') : ''}</div>
-      <div class="price-note">${p.note}</div>
-      <ul>${p.feats.map(([f, on]) => `<li class="${on ? '' : 'off'}"><span class="ck">${on ? '✓' : '✕'}</span>${f}</li>`).join('')}</ul>
-      <button class="sd-btn ${isRec ? 'primary' : 'ghost'}" onclick="sdChoose('${key}')">${p.price === 0 ? 'Start for free' : (p.oneshot ? 'Buy ' + p.name : 'Choose ' + p.name)}</button>`;
+    el.innerHTML = `${isRec ? `<div class="tag">${t('plans.recommendedFor')}</div>` : ''}
+      <h3>${name}</h3><div class="for">${t(p.forKey)}</div>
+      <div class="price">${priceText(p)}${suffix}</div>
+      <div class="price-note">${t(p.noteKey)}</div>
+      <ul>${p.feats.map(([f, on]) => `<li class="${on ? '' : 'off'}"><span class="ck">${on ? '✓' : '✕'}</span>${t(f)}</li>`).join('')}</ul>
+      <button class="sd-btn ${isRec ? 'primary' : 'ghost'}" onclick="sdChoose('${key}')">${btn}</button>`;
     box.appendChild(el);
   });
-  sd$('sdPlansTitle').textContent = isOneShot() ? 'Your recommended pack' : 'Your recommended plan';
+  sd$('sdPlansTitle').textContent = isOneShot() ? t('plans.titlePack') : t('plans.titlePlan');
   sd$('sdPlanWhy').innerHTML = whyText(rec);
   sdGo('s-plans');
 }
@@ -82,29 +82,30 @@ function sdChoose(key) {
   chosen = key;
   const p = catalog()[key];
   if (p.price === 0) { sdActivate(key, false); return; } // Starter gratis → sin checkout
-  sd$('sdPayPlanName').textContent = (p.oneshot ? '' : 'Plan ') + p.name;
-  sd$('sdPayAmount').innerHTML = `${p.priceLabel}<span style="font-size:13px;font-weight:400;opacity:.7">${p.oneshot ? ' one-time' : '/mo'}</span>`;
+  const name = planName(p);
+  sd$('sdPayPlanName').textContent = name;
+  sd$('sdPayAmount').innerHTML = `${priceText(p)}<span style="font-size:13px;font-weight:400;opacity:.7">${p.oneshot ? ' ' + t('price.oneTime') : t('price.perMo')}</span>`;
   sd$('sdPaySummary').innerHTML = `
-    <div class="li"><span>${p.name}</span><span>${p.priceLabel}${p.oneshot ? '' : '/mo'}</span></div>
-    <div class="li"><span>${p.note}</span><span></span></div>
-    ${A.ia === 'yes' ? '<div class="li"><span>AI layer</span><span style="color:var(--success)">included</span></div>' : ''}
-    ${p.oneshot ? '<div class="li"><span>Renewal</span><span style="color:var(--success)">None · one-time</span></div>' : ''}
-    <div class="li tot"><span>Total today</span><span>${p.priceLabel}</span></div>`;
+    <div class="li"><span>${name}</span><span>${priceText(p)}${p.oneshot ? '' : t('price.perMo')}</span></div>
+    <div class="li"><span>${t(p.noteKey)}</span><span></span></div>
+    ${A.ia === 'yes' ? `<div class="li"><span>${t('pay.aiLayer')}</span><span style="color:var(--success)">${t('pay.included')}</span></div>` : ''}
+    ${p.oneshot ? `<div class="li"><span>${t('pay.renewal')}</span><span style="color:var(--success)">${t('pay.none')}</span></div>` : ''}
+    <div class="li tot"><span>${t('pay.totalToday')}</span><span>${priceText(p)}</span></div>`;
   sdGo('s-pay');
 }
 
 function sdPay() {
   const b = sd$('sdPayBtn');
-  b.disabled = true; b.innerHTML = '<span class="sd-spinner"></span> Processing…';
+  b.disabled = true; b.innerHTML = `<span class="sd-spinner"></span> ${t('pay.processing')}`;
   // TODO(Stripe): acá iría Stripe Checkout / Billing + webhook de confirmación.
   //               Hoy es un pago simulado (dummy) para la demo.
-  setTimeout(() => { sdActivate(chosen, true); b.disabled = false; b.textContent = 'Pay and start'; }, 1500);
+  setTimeout(() => { sdActivate(chosen, true); b.disabled = false; b.textContent = t('pay.btn'); }, 1500);
 }
 
 function sdActivate(key, paid) {
   const p = catalog()[key];
   const one = !!p.oneshot;
-  ACC.plan = p.name;
+  ACC.plan = planName(p);
   ACC.limit = p.limit;
   ACC.ia = one ? (key !== 'small') : ((key !== 'starter' && A.ia === 'yes') || key === 'enterprise');
   ACC.oneshot = one;
@@ -117,10 +118,10 @@ function sdActivate(key, paid) {
 /* ===== Entrada al builder: aplica el plan y navega ===== */
 function sdEnterBuilder() {
   // Pills del header compartido (sd-top): plan + IA + tipo de envío
-  const stLabel = (typeof SD_SENDTYPE_LABEL !== 'undefined' && ACC.sendType) ? SD_SENDTYPE_LABEL[ACC.sendType] : null;
+  const stLabel = sdSendTypeLabel(ACC.sendType);
   sd$('sdTopRight').innerHTML =
     `<span class="sd-pill plan">${ACC.plan}</span>` +
-    (ACC.ia ? '<span class="sd-pill ia">AI active</span>' : '<span class="sd-pill">manual mode</span>') +
+    (ACC.ia ? `<span class="sd-pill ia">${t('pill.aiActive')}</span>` : `<span class="sd-pill">${t('pill.manualMode')}</span>`) +
     (stLabel ? `<span class="sd-pill">${stLabel}</span>` : '');
   sdGo('s-builder'); // sdGo llama a sdbOnEnter() para reflejar ACC en el builder
 }
