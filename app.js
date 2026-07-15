@@ -988,8 +988,12 @@ async function startBulkSend() {
   const token = document.getElementById('cfg-token').value.trim();
   if (!token) { alert('Falta el token API'); return; }
 
+  const provider = document.getElementById('cfg-provider')?.value || 'signaturit';
   const isSMS = operationType === 'sms';
   const hasPDFs = Object.keys(pdfFiles).length > 0;
+
+  if (provider === 'esaw' && isSMS) { alert('eSAW no soporta SMS certificado — elige Signaturit o cambia el tipo de solicitud'); return; }
+  if (provider === 'esaw' && useTemplate) { alert('eSAW no soporta plantillas de Signaturit — desmarca "usar plantilla"'); return; }
 
   const validItems = isSMS
     ? matchedData.filter(d => d.phone)
@@ -1116,22 +1120,33 @@ async function startBulkSend() {
 
     const t0 = Date.now();
     try {
-      const resp = await fetch(PROXY_URL, { method: 'POST', headers: { 'x-signaturit-token': token, 'x-api-url': apiUrl }, body: fd });
-      const data = await resp.json();
-      const elapsed = Date.now() - t0;
-      if (resp.ok && data.id) {
-        ok++;
-        log(`${destLabel} <span class="log-id">ID: ${data.id}</span> <span class="log-detail">${elapsed}ms</span>`, 'ok', 'success');
-        sendLog.push({ ...item, status: 'ok', id: data.id });
+      let resultId;
+      if (provider === 'esaw') {
+        const esawEnv = env.includes('sandbox') ? 'sandbox' : 'production';
+        const fileBlob = pdfFiles[item.fileName.toLowerCase()].file;
+        const result = await ESAWProvider.send({
+          recipients: item.signers,
+          fileBlob,
+          fileName: item.fileName,
+          subject: resolveVars(subj, item),
+          body: resolveVars(body, item),
+          env: esawEnv,
+        }, token);
+        resultId = result.id;
       } else {
-        err++;
-        const m = data.message || data.error || JSON.stringify(data);
-        log(`${destLabel} — ${m} <span class="log-detail">${elapsed}ms</span>`, 'err', 'error');
-        sendLog.push({ ...item, status: 'error', error: m });
+        const resp = await fetch(PROXY_URL, { method: 'POST', headers: { 'x-signaturit-token': token, 'x-api-url': apiUrl }, body: fd });
+        const data = await resp.json();
+        if (!resp.ok || !data.id) throw new Error(data.message || data.error || JSON.stringify(data));
+        resultId = data.id;
       }
+      const elapsed = Date.now() - t0;
+      ok++;
+      log(`${destLabel} <span class="log-id">ID: ${resultId}</span> <span class="log-detail">${elapsed}ms</span>`, 'ok', 'success');
+      sendLog.push({ ...item, status: 'ok', id: resultId });
     } catch (e) {
       err++;
-      log(`${destLabel} — ${e.message}`, 'err', 'error');
+      const elapsed = Date.now() - t0;
+      log(`${destLabel} — ${e.message} <span class="log-detail">${elapsed}ms</span>`, 'err', 'error');
       sendLog.push({ ...item, status: 'error', error: e.message });
     }
 
