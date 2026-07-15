@@ -481,12 +481,21 @@
       <div class="panel active" id="panel1">
         <h2 class="section-title">Setup</h2>
         <p class="section-desc">Configure the environment and send options</p>
-        <div class="config-grid">
+        <!-- Credenciales del envío. Cuando se llega desde el flujo (builder), el
+             proveedor + token + entorno ya vienen del onboarding → se prellenan y
+             este bloque se oculta (body.sd-bridge). Ver js/bridge.js. -->
+        <div class="config-grid" id="setup-creds">
           <!-- Selector temporal — lo reemplaza el onboarding conversacional cuando esté armado (ver CLAUDE.md) -->
           <div class="config-card"><label>Provider</label><select id="cfg-provider"><option value="signaturit">Signaturit</option><option value="esaw">eSAW (eSignAnyWhere)</option></select></div>
           <div class="config-card"><label>Environment <span class="req">*</span></label><select id="cfg-env"><option value="https://api.signaturit.com">Production</option><option value="https://api.sandbox.signaturit.com">Sandbox</option></select></div>
           <div class="config-card"><label>API token <span class="req">*</span></label><input type="password" id="cfg-token" placeholder="Paste your token here"></div>
         </div>
+
+        <!-- Opciones avanzadas: colapsadas por defecto al venir del builder
+             (asunto, marca, reply-to, cuerpo, plantilla, variables). -->
+        <details class="setup-advanced" id="setup-advanced">
+        <summary class="setup-advanced-summary">Advanced options <span class="setup-advanced-hint">— subject, branding, reply-to, email body</span></summary>
+        <div class="setup-advanced-body">
 
         <!-- Plantilla toggle -->
         <div class="config-card config-full" id="bulk-tpl-section" style="margin-bottom:14px">
@@ -603,6 +612,10 @@
           <div class="var-toolbar-header"><h4>📌 Variables</h4><span class="var-count" id="varCount">14</span></div>
           <div class="var-chips" id="varChips"></div>
         </div>
+
+        </div><!-- /.setup-advanced-body -->
+        </details><!-- /#setup-advanced -->
+
         <div class="actions"><div></div><button class="btn btn-primary" onclick="goToStep(2)">Next →</button></div>
       </div>
 

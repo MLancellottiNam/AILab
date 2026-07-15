@@ -70,6 +70,15 @@ function sdbBridgeToSend() {
   const provSel = document.getElementById('cfg-provider');
   if (provSel) provSel.value = 'signaturit';
 
+  // Prellenar credenciales desde el onboarding: proveedor + token + entorno ya
+  // vienen dados, así que el usuario NO tiene que reingresarlos. El bloque de
+  // credenciales se oculta (body.sd-bridge) y las opciones avanzadas se colapsan.
+  const tokInput = document.getElementById('cfg-token');
+  if (tokInput && typeof ACC !== 'undefined' && ACC.token) tokInput.value = ACC.token;
+  document.body.classList.add('sd-bridge');
+  const adv = document.getElementById('setup-advanced');
+  if (adv) adv.open = false;
+
   // Aviso si el onboarding había asignado eSAW (su envío de doc está pendiente).
   const esawWanted = (typeof ACC !== 'undefined' && (ACC.product === 'esaw' || ACC.provider === 'esaw'));
 
@@ -89,8 +98,10 @@ function sdbBridgeToSend() {
   const subjToggle = document.getElementById('toggle-subject'), subjInput = document.getElementById('cfg-subject');
   if (subjToggle && subjInput && !subjInput.value.trim()) { subjToggle.checked = true; subjInput.value = title; subjToggle.dispatchEvent(new Event('change')); }
 
-  // 4) Ir al paso de Configuración (el usuario pega su token y envía).
-  if (typeof goToStep === 'function') goToStep(1);
+  // 4) Ir DIRECTO al paso de envío (Send): los PDFs ya están generados y la
+  //    config viene del onboarding, así que el usuario ve los documentos listos
+  //    para mandar sin pasar por Setup/Files/Mapping. Puede volver con "← Back".
+  if (typeof goToStep === 'function') goToStep(4);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   if (esawWanted) {
@@ -104,6 +115,7 @@ function sdbBridgeToSend() {
    la preview nativos hacen el matching (por eso __sdBridge.active = false). */
 function sdbEnterOwnPdf() {
   window.__sdBridge.active = false;
+  document.body.classList.remove('sd-bridge'); // flujo nativo: se muestran las credenciales
 
   // Estado de envío limpio (el usuario carga lo suyo desde cero).
   pdfFiles = {}; matchedData = []; sendLog = [];
@@ -133,6 +145,7 @@ window.sdEnterOwnPdf = sdbEnterOwnPdf;
 // Salir del envío y volver al builder (por si el usuario quiere retocar).
 function sdbBridgeBackToBuilder() {
   window.__sdBridge.active = false;
+  document.body.classList.remove('sd-bridge');
   const wrap = document.getElementById('appWrapper');
   if (wrap) wrap.classList.remove('active');
   document.querySelectorAll('.sd-top, .sd-wrap').forEach(el => { el.style.display = ''; });
