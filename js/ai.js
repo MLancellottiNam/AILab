@@ -63,7 +63,10 @@ async function aiCall(task, payload) {
 (function (global) {
   // Mismo proyecto Supabase que los otros proxies. Funciona cuando Marcos
   // despliegue la función `claude-proxy` (ver functions/claude-proxy/README.md).
-  const CLAUDE_PROXY_URL = 'https://plejrqzzxnypnxxnamxj.supabase.co/functions/v1/claude-proxy';
+  // Override opcional para dev local: localStorage.setItem('CLAUDE_PROXY_URL', 'http://localhost:8799')
+  const CLAUDE_PROXY_URL =
+    (typeof localStorage !== 'undefined' && localStorage.getItem('CLAUDE_PROXY_URL')) ||
+    'https://plejrqzzxnypnxxnamxj.supabase.co/functions/v1/claude-proxy';
 
   // Valores válidos por campo (para no aceptar basura del modelo).
   const VALID = {

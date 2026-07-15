@@ -59,10 +59,10 @@ function sdRunTokenConsole(data, product) {
   const lines = [
     { html: `<span class="c-req">${endpoint}</span>  <span class="c-dim">Host: api.${isEsaw ? 'esignanywhere' : 'signaturit'}.com</span>`, d: 250 },
     { html: `<span class="c-dim">${sdEscConsole(body)}</span>`, d: 500 },
-    { html: `<span class="c-dim">… creating account</span>`, d: 900 },
+    { html: `<span class="c-dim">${t('signup.creating')}</span>`, d: 900 },
     { html: `<span class="c-ok">← 201 Created</span>`, d: 500 },
     { html: `{ "api_token": "<span class="c-key">${acct.token}</span>", "status": "active" }`, d: 400 },
-    { html: `<span class="c-dim">// sending welcome email to ${sdEscConsole(data.email)}</span>`, d: 450 }
+    { html: `<span class="c-dim">${t('signup.sendingMail', { email: sdEscConsole(data.email) })}</span>`, d: 450 }
   ];
 
   let i = 0;
@@ -79,11 +79,11 @@ function sdRunTokenConsole(data, product) {
 function sdRevealToken(data, product, productName) {
   sd$('sdTokenValue').textContent = signupToken;
   sd$('sdTokenBox').style.display = 'block';
-  // El mail NO lleva el token: solo dice en qué producto tiene cuenta
-  sd$('sdMailBody').innerHTML = `
-    <b>Welcome to ${productName}, ${sdEscConsole(data.first_name)}!</b><br><br>
-    Your account (<b>${sdEscConsole(data.email)}</b>) is ready. You now have access to ${productName}.<br><br>
-    For security, your API token is never sent by email — you'll find it in your dashboard.`;
+  // El mail NO lleva el token ni nombra el proveedor (transparente para el cliente).
+  sd$('sdMailBody').innerHTML = t('signup.mail.body', {
+    name: sdEscConsole(data.first_name),
+    email: sdEscConsole(data.email),
+  });
   sd$('sdMailPreview').style.display = 'block';
   sd$('sdTokenEnter').style.display = '';
 }

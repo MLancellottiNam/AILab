@@ -19,9 +19,9 @@
   <button class="sd-back-btn" id="sdBack" onclick="goBack()" title="Back (Esc)" style="display:none">←</button>
   <div class="sd-logo">SD</div>
   <h1>Smart Dispatch</h1>
-  <span class="sd-crumb" id="sdCrumb">Start</span>
+  <span class="sd-crumb" id="sdCrumb" data-i18n="crumb.s-fork">Start</span>
   <div class="sd-right" id="sdTopRight">
-    <span class="sd-pill">demo · simulated payments</span>
+    <span class="sd-pill" data-i18n="top.tagline">demo · simulated payments</span>
   </div>
 </div>
 
@@ -30,21 +30,21 @@
   <!-- 0. FORK -->
   <section class="sd-screen on" id="s-fork">
     <div class="sd-hero">
-      <h2>Let's get started</h2>
-      <p>Turn a document and a data source into a batch of PDFs ready to sign. Tell us who you are and we'll build your plan.</p>
+      <h2 data-i18n="fork.title">Let's get started</h2>
+      <p data-i18n="fork.lead">Turn a document and a data source into a batch of PDFs ready to sign. Tell us who you are and we'll build your plan.</p>
     </div>
     <div class="sd-fork">
       <div class="sd-fork-card" onclick="sdGo('s-client')">
         <div class="ic" style="background:var(--sig-primary-light);color:var(--sig-primary-dark)">🔑</div>
-        <h3>I'm already a customer</h3>
-        <p>You have an active Signaturit or eSAW account. Sign in with your token and use the tool.</p>
-        <div class="cta">Sign in with my token →</div>
+        <h3 data-i18n="fork.client.title">I'm already a customer</h3>
+        <p data-i18n="fork.client.desc">You have an active account. Sign in with your token and use the tool.</p>
+        <div class="cta" data-i18n="fork.client.cta">Sign in with my token →</div>
       </div>
       <div class="sd-fork-card" onclick="sdGo('s-quiz')">
         <div class="ic" style="background:#fff0e8;color:#e85a28">✨</div>
-        <h3>I want to start</h3>
-        <p>Not a customer yet. Answer a few questions and we'll recommend the plan that fits you.</p>
-        <div class="cta">Build my plan →</div>
+        <h3 data-i18n="fork.new.title">I want to start</h3>
+        <p data-i18n="fork.new.desc">Not a customer yet. Answer a few questions and we'll recommend the plan that fits you.</p>
+        <div class="cta" data-i18n="fork.new.cta">Build my plan →</div>
       </div>
     </div>
   </section>
@@ -52,26 +52,26 @@
   <!-- 1. CLIENTE -->
   <section class="sd-screen" id="s-client">
     <div class="sd-hero">
-      <h2>Sign in with your token</h2>
-      <p>Your credentials live only in this session. We don't store tokens, documents or data.</p>
+      <h2 data-i18n="client.title">Sign in with your token</h2>
+      <p data-i18n="client.lead">Your credentials live only in this session. We don't store tokens, documents or data.</p>
     </div>
     <div class="sd-qbox" style="max-width:460px">
       <div class="sd-q">
-        <div class="sd-qlab">Signature product</div>
+        <div class="sd-qlab" data-i18n="client.product">Signature product</div>
         <div class="sd-opts">
           <div class="sd-opt sel" onclick="sdPickOne(this)"><span class="sd-radio"></span> Signaturit</div>
           <div class="sd-opt" onclick="sdPickOne(this)"><span class="sd-radio"></span> eSignAnywhere (eSAW)</div>
         </div>
       </div>
       <div class="sd-field" style="margin-top:15px">
-        <label>API token</label>
+        <label data-i18n="client.tokenLabel">API token</label>
         <input type="password" id="sdTok" value="demo_token_not_stored">
       </div>
-      <div class="sd-chat-hint">🔒 The token travels in each request header and is discarded. It never touches disk or a database.</div>
+      <div class="sd-chat-hint" data-i18n="client.tokenHint">🔒 The token travels in each request header and is discarded. It never touches disk or a database.</div>
     </div>
     <div class="sd-nav">
-      <button class="sd-btn ghost" onclick="sdGo('s-fork')">← Back</button>
-      <button class="sd-btn teal" onclick="sdEnterAsClient()">Enter the tool →</button>
+      <button class="sd-btn ghost" onclick="sdGo('s-fork')" data-i18n="common.back">← Back</button>
+      <button class="sd-btn teal" onclick="sdEnterAsClient()" data-i18n="client.enter">Enter the tool →</button>
     </div>
   </section>
 
@@ -79,27 +79,28 @@
   <section class="sd-screen" id="s-quiz">
     <div class="sd-mini-steps"><div class="sd-ms on"></div><div class="sd-ms"></div><div class="sd-ms"></div></div>
     <div class="sd-hero">
-      <h2>Tell us what you need</h2>
-      <p>Let's chat for a minute and we'll build the plan that fits you, without overselling.</p>
+      <h2 data-i18n="quiz.title">Tell us what you need</h2>
+      <p data-i18n="quiz.lead">Let's chat for a minute and we'll build the plan that fits you, without overselling.</p>
     </div>
     <div class="sd-chat-shell">
       <div class="sd-chat-bar">
         <div class="av">SD</div>
         <div>
-          <div class="nm">Smart Dispatch Assistant</div>
-          <div class="st">online</div>
+          <div class="nm" data-i18n="quiz.assistant">Smart Dispatch Assistant</div>
+          <div class="st" data-i18n="quiz.online">online</div>
         </div>
       </div>
       <div class="sd-chat-log" id="sdChatLog"></div>
       <div class="sd-chat-actions" id="sdChatActions"></div>
       <form class="sd-chat-input" id="sdChatInput" onsubmit="sdSubmitText(event)">
         <input type="text" id="sdChatText" autocomplete="off"
+               data-i18n-ph="quiz.inputPh"
                placeholder="Type what you need… e.g. “I need to send 300 contracts for signature”">
         <button type="submit" class="sd-chat-send" id="sdChatSend" aria-label="Send">➤</button>
       </form>
     </div>
     <div class="sd-nav" style="max-width:620px">
-      <button class="sd-btn ghost" onclick="sdResetChat()">← Start over</button>
+      <button class="sd-btn ghost" onclick="sdResetChat()" data-i18n="quiz.startOver">← Start over</button>
       <span class="sd-chat-hint" id="sdChatProgress"></span>
     </div>
   </section>
@@ -113,7 +114,7 @@
     </div>
     <div class="sd-plans" id="sdPlansBox"></div>
     <div style="text-align:center;margin-top:20px">
-      <button class="sd-btn ghost" onclick="sdGo('s-quiz')">← Change answers</button>
+      <button class="sd-btn ghost" onclick="sdGo('s-quiz')" data-i18n="plans.changeAnswers">← Change answers</button>
     </div>
   </section>
 
@@ -121,8 +122,8 @@
   <section class="sd-screen" id="s-pay">
     <div class="sd-mini-steps"><div class="sd-ms on"></div><div class="sd-ms on"></div><div class="sd-ms on"></div></div>
     <div class="sd-hero">
-      <h2>Confirm your subscription</h2>
-      <p>Simulated payment for the demo. No real card is charged.</p>
+      <h2 data-i18n="pay.title">Confirm your subscription</h2>
+      <p data-i18n="pay.lead">Simulated payment for the demo. No real card is charged.</p>
     </div>
     <div class="sd-checkout">
       <div class="sd-co-head">
@@ -131,65 +132,65 @@
       </div>
       <div class="sd-co-body">
         <div class="sd-co-summary" id="sdPaySummary"></div>
-        <div class="sd-field"><label>Email</label><input type="text" value="demo@company.com"></div>
-        <div class="sd-field"><label>Card number</label><input type="text" value="4242 4242 4242 4242"></div>
+        <div class="sd-field"><label data-i18n="pay.email">Email</label><input type="text" value="demo@company.com"></div>
+        <div class="sd-field"><label data-i18n="pay.card">Card number</label><input type="text" value="4242 4242 4242 4242"></div>
         <div class="sd-field-row">
-          <div class="sd-field"><label>Expiry</label><input type="text" value="12 / 28"></div>
-          <div class="sd-field"><label>CVC</label><input type="text" value="123"></div>
+          <div class="sd-field"><label data-i18n="pay.expiry">Expiry</label><input type="text" value="12 / 28"></div>
+          <div class="sd-field"><label data-i18n="pay.cvc">CVC</label><input type="text" value="123"></div>
         </div>
-        <button class="sd-btn primary" id="sdPayBtn" style="width:100%;justify-content:center;margin-top:5px" onclick="sdPay()">Pay and start</button>
+        <button class="sd-btn primary" id="sdPayBtn" style="width:100%;justify-content:center;margin-top:5px" onclick="sdPay()" data-i18n="pay.btn">Pay and start</button>
         <!-- Integración dummy. En producción: Stripe Checkout / Billing + webhook de confirmación. -->
-        <div class="sd-dummy-note">🧪 Dummy integration. In production this would be Stripe Checkout / Billing with a confirmation webhook.</div>
+        <div class="sd-dummy-note" data-i18n="pay.dummy">🧪 Dummy integration. In production this would be Stripe Checkout / Billing with a confirmation webhook.</div>
       </div>
     </div>
-    <div class="sd-nav" style="max-width:460px"><button class="sd-btn ghost" onclick="sdGo('s-plans')">← Choose another plan</button><span></span></div>
+    <div class="sd-nav" style="max-width:460px"><button class="sd-btn ghost" onclick="sdGo('s-plans')" data-i18n="pay.chooseAnother">← Choose another plan</button><span></span></div>
   </section>
 
   <!-- 4b. SIGN UP (new account — simulated API creation) -->
   <section class="sd-screen" id="s-signup">
     <div class="sd-hero">
-      <h2>Your details</h2>
-      <p>We create your signature account and hand you back a token. Nothing is stored on our side.</p>
+      <h2 data-i18n="signup.title">Your details</h2>
+      <p data-i18n="signup.lead">We create your signature account and hand you back a token. Nothing is stored on our side.</p>
     </div>
     <div class="sd-qbox" style="max-width:520px">
       <div class="sd-field-row">
-        <div class="sd-field"><label>First name</label><input type="text" id="sdSuFirst" value="Marcos"></div>
-        <div class="sd-field"><label>Last name</label><input type="text" id="sdSuLast" value="Lancellotti"></div>
+        <div class="sd-field"><label data-i18n="signup.first">First name</label><input type="text" id="sdSuFirst" value="Marcos"></div>
+        <div class="sd-field"><label data-i18n="signup.last">Last name</label><input type="text" id="sdSuLast" value="Lancellotti"></div>
       </div>
-      <div class="sd-field"><label>Email</label><input type="text" id="sdSuEmail" value="marcos@company.com"></div>
+      <div class="sd-field"><label data-i18n="signup.email">Email</label><input type="text" id="sdSuEmail" value="marcos@company.com"></div>
       <div class="sd-field-row">
-        <div class="sd-field"><label>Company</label><input type="text" id="sdSuCompany" value="Acme Corp"></div>
-        <div class="sd-field"><label>Username</label><input type="text" id="sdSuUser" value="mlancellotti"></div>
+        <div class="sd-field"><label data-i18n="signup.company">Company</label><input type="text" id="sdSuCompany" value="Acme Corp"></div>
+        <div class="sd-field"><label data-i18n="signup.username">Username</label><input type="text" id="sdSuUser" value="mlancellotti"></div>
       </div>
-      <div class="sd-field"><label>Phone</label><input type="text" id="sdSuPhone" value="+34 600 000 000"></div>
-      <div class="sd-signup-note">ℹ️ Automatic account creation via API isn't available yet in Signaturit or eSAW. In this demo we simulate the round-trip.</div>
+      <div class="sd-field"><label data-i18n="signup.phone">Phone</label><input type="text" id="sdSuPhone" value="+34 600 000 000"></div>
+      <div class="sd-signup-note" data-i18n="signup.note">ℹ️ Automatic account creation via API isn't available yet in Signaturit or eSAW. In this demo we simulate the round-trip.</div>
     </div>
     <div class="sd-nav">
-      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
-      <button class="sd-btn teal" onclick="sdSubmitSignup()">Create my account →</button>
+      <button class="sd-btn ghost" onclick="goBack()" data-i18n="common.back">← Back</button>
+      <button class="sd-btn teal" onclick="sdSubmitSignup()" data-i18n="signup.create">Create my account →</button>
     </div>
   </section>
 
   <!-- 4c. TOKEN (simulated API response) -->
   <section class="sd-screen" id="s-token">
     <div class="sd-hero">
-      <h2>Your token</h2>
-      <p>This is the API round-trip that would happen against your signature provider.</p>
+      <h2 data-i18n="token.title">Your token</h2>
+      <p data-i18n="token.lead">This is the API round-trip that would happen against your signature provider.</p>
     </div>
     <div class="sd-token-wrap">
       <div class="sd-console" id="sdConsole"></div>
       <div class="sd-token-box" id="sdTokenBox" style="display:none">
-        <div class="lbl">Generated token (lives only in this session)</div>
+        <div class="lbl" data-i18n="token.genLabel">Generated token (lives only in this session)</div>
         <code id="sdTokenValue"></code>
       </div>
       <div class="sd-mail" id="sdMailPreview" style="display:none">
-        <div class="sd-mail-head">📧 Welcome email preview</div>
+        <div class="sd-mail-head" data-i18n="token.mailHead">📧 Welcome email preview</div>
         <div class="sd-mail-body" id="sdMailBody"></div>
       </div>
     </div>
     <div class="sd-nav" style="max-width:620px">
-      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
-      <button class="sd-btn teal" id="sdTokenEnter" onclick="sdFinishSignup()" style="display:none">Enter with this token →</button>
+      <button class="sd-btn ghost" onclick="goBack()" data-i18n="common.back">← Back</button>
+      <button class="sd-btn teal" id="sdTokenEnter" onclick="sdFinishSignup()" style="display:none" data-i18n="token.enter">Enter with this token →</button>
     </div>
   </section>
 
@@ -200,42 +201,42 @@
       <h2 id="sdDoneTitle">All set!</h2>
       <p id="sdDoneSub"></p>
       <div class="sd-recap" id="sdRecap"></div>
-      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdAfterDone()">Continue →</button>
+      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdAfterDone()" data-i18n="done.continue">Continue →</button>
     </div>
   </section>
 
   <!-- 5b. SEND TYPE (reusa operationType del bulksend) -->
   <section class="sd-screen" id="s-sendtype">
     <div class="sd-hero">
-      <h2>What are you sending?</h2>
-      <p>Pick the request type. It's the same set the bulk sender already supports.</p>
+      <h2 data-i18n="sendtype.title">What are you sending?</h2>
+      <p data-i18n="sendtype.lead">Pick the request type. It's the same set the bulk sender already supports.</p>
     </div>
     <div class="sd-sendtypes">
       <div class="sd-sendtype" data-type="advanced" onclick="sdPickSendType(this)">
         <div class="ic">✍️</div>
-        <div class="tx"><h4>Advanced signature <span class="sd-rec-tag">Recommended</span></h4><p>Biometric or digital certificate</p></div>
+        <div class="tx"><h4><span data-i18n="sendtype.advanced">Advanced signature</span> <span class="sd-rec-tag" data-i18n="sendtype.recommended">Recommended</span></h4><p data-i18n="sendtype.advancedDesc">Biometric or digital certificate</p></div>
         <span class="sd-radio"></span>
       </div>
       <div class="sd-sendtype" data-type="simple" onclick="sdPickSendType(this)">
         <div class="ic">☑️</div>
-        <div class="tx"><h4>Simple signature</h4><p>One-click signing</p></div>
+        <div class="tx"><h4 data-i18n="sendtype.simple">Simple signature</h4><p data-i18n="sendtype.simpleDesc">One-click signing</p></div>
         <span class="sd-radio"></span>
       </div>
       <div class="sd-sendtype" data-type="email" onclick="sdPickSendType(this)">
         <div class="ic">📧</div>
-        <div class="tx"><h4>Certified email</h4><p>Certify your communications</p></div>
+        <div class="tx"><h4 data-i18n="sendtype.email">Certified email</h4><p data-i18n="sendtype.emailDesc">Certify your communications</p></div>
         <span class="sd-radio"></span>
       </div>
       <div class="sd-sendtype" data-type="sms" onclick="sdPickSendType(this)">
         <div class="ic">💬</div>
-        <div class="tx"><h4>Certified SMS</h4><p>Certify your text messages</p></div>
+        <div class="tx"><h4 data-i18n="sendtype.sms">Certified SMS</h4><p data-i18n="sendtype.smsDesc">Certify your text messages</p></div>
         <span class="sd-radio"></span>
       </div>
     </div>
     <div class="sd-sendtype-note" id="sdSendTypeNote" style="display:none"></div>
     <div class="sd-nav">
-      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
-      <button class="sd-btn teal" id="sdSendTypeNext" disabled onclick="sdContinueSendType()">Continue →</button>
+      <button class="sd-btn ghost" onclick="goBack()" data-i18n="common.back">← Back</button>
+      <button class="sd-btn teal" id="sdSendTypeNext" disabled onclick="sdContinueSendType()" data-i18n="sendtype.continue">Continue →</button>
     </div>
   </section>
 
@@ -682,6 +683,7 @@
   </div>
 </div>
 
+<script src="js/i18n.js"></script>
 <script src="js/providers/esaw.js"></script>
 <script src="app.js"></script>
 <script src="js/ai.js"></script>
