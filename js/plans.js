@@ -9,7 +9,7 @@
 
 const PACKS = {
   small:  { nameKey: 'pack.name.small',  forKey: 'pack.for.small',  price: 19,  priceLabel: '€19',  limit: 100,  oneshot: true, noteKey: 'pack.note.small',
-    feats: [['feat.pdfGen', 1], ['feat.data', 1], ['feat.bulk', 1], ['feat.noSub', 1], ['feat.neverExpires', 1], ['feat.ai', 0]] },
+    feats: [['feat.pdfGen', 1], ['feat.data', 1], ['feat.bulk', 1], ['feat.noSub', 1], ['feat.neverExpires', 1], ['feat.ai', 1]] },
   medium: { nameKey: 'pack.name.medium', forKey: 'pack.for.medium', price: 49,  priceLabel: '€49',  limit: 500,  oneshot: true, noteKey: 'pack.note.medium',
     feats: [['feat.everythingSmall', 1], ['feat.upTo500', 1], ['feat.aiFields', 1], ['feat.aiBrand', 1], ['feat.noSub', 1], ['feat.neverExpires', 1]] },
   large:  { nameKey: 'pack.name.large',  forKey: 'pack.for.large',  price: 99,  priceLabel: '€99',  limit: 2000, oneshot: true, noteKey: 'pack.note.large',
@@ -18,7 +18,7 @@ const PACKS = {
 
 const PLANS = {
   starter:    { name: 'Starter',    forKey: 'plan.for.starter',    price: 0,   priceLabel: '€0',   limit: 100,      noteKey: 'plan.note.starter',
-    feats: [['feat.pdfGen', 1], ['feat.data', 1], ['feat.manualPlace', 1], ['feat.bulk', 1], ['feat.ai', 0], ['feat.multiUser', 0]] },
+    feats: [['feat.pdfGen', 1], ['feat.data', 1], ['feat.manualPlace', 1], ['feat.bulk', 1], ['feat.ai', 1], ['feat.multiUser', 0]] },
   pro:        { name: 'Pro',        forKey: 'plan.for.pro',        price: 49,  priceLabel: '€49',  limit: 1000,     noteKey: 'plan.note.pro',
     feats: [['feat.everythingStarter', 1], ['feat.aiFields', 1], ['feat.aiMapping', 1], ['feat.aiBrand', 1], ['feat.upTo5Users', 1], ['feat.prioritySupport', 0]] },
   enterprise: { name: 'Enterprise', forKey: 'plan.for.enterprise', price: 199, priceLabel: '€199', limit: Infinity, noteKey: 'plan.note.enterprise',
@@ -33,11 +33,11 @@ const priceText = p => p.price === 0 ? t('price.free') : p.priceLabel;
 function recommend() {
   if (isOneShot()) {
     if (A.vol === 'high') return 'large';
-    if (A.vol === 'mid' || A.ia === 'yes') return 'medium';
+    if (A.vol === 'mid') return 'medium';
     return 'small';
   }
   if (A.vol === 'high' || A.team === 'many') return 'enterprise';
-  if (A.ia === 'yes' || A.vol === 'mid' || A.team === 'few') return 'pro';
+  if (A.vol === 'mid' || A.team === 'few') return 'pro';
   return 'starter';
 }
 
@@ -49,7 +49,6 @@ function whyText(k) {
   if (st) b.push(st);
   if (isOneShot()) b.push(A.freq === 'oneshot' ? t('why.oneshot') : t('why.occasional'));
   if (A.vol) b.push(t('why.vol.' + A.vol));
-  b.push(A.ia === 'yes' ? t('why.ia.yes') : t('why.ia.no'));
   if (A.team) b.push(t('why.team.' + A.team));
   return t('why.text', { list: b.join(' · '), name: planName(catalog()[k]) });
 }
@@ -88,7 +87,7 @@ function sdChoose(key) {
   sd$('sdPaySummary').innerHTML = `
     <div class="li"><span>${name}</span><span>${priceText(p)}${p.oneshot ? '' : t('price.perMo')}</span></div>
     <div class="li"><span>${t(p.noteKey)}</span><span></span></div>
-    ${A.ia === 'yes' ? `<div class="li"><span>${t('pay.aiLayer')}</span><span style="color:var(--success)">${t('pay.included')}</span></div>` : ''}
+    <div class="li"><span>${t('pay.aiLayer')}</span><span style="color:var(--success)">${t('pay.included')}</span></div>
     ${p.oneshot ? `<div class="li"><span>${t('pay.renewal')}</span><span style="color:var(--success)">${t('pay.none')}</span></div>` : ''}
     <div class="li tot"><span>${t('pay.totalToday')}</span><span>${priceText(p)}</span></div>`;
   sdGo('s-pay');
@@ -107,7 +106,9 @@ function sdActivate(key, paid) {
   const one = !!p.oneshot;
   ACC.plan = planName(p);
   ACC.limit = p.limit;
-  ACC.ia = one ? (key !== 'small') : ((key !== 'starter' && A.ia === 'yes') || key === 'enterprise');
+  // La redacción de Namirial Dispatch es una capacidad core: siempre disponible,
+  // en todos los planes y packs (ya no depende de una pregunta en el chat).
+  ACC.ia = true;
   ACC.oneshot = one;
   ACC.isClient = false;
   // El plan quedó elegido; ahora pasa por el alta (crea la cuenta y te da el token).
