@@ -279,8 +279,11 @@ async function sdSubmitText(e) {
   const applied = intent ? sdApplyIntent(intent) : [];
 
   if (!applied.length) {
-    // No entendimos nada → guiar con el paso actual.
-    sdAddBot(t('chat.notUnderstood'));
+    // Nada aplicable: o el mensaje está fuera del ámbito del asistente (temas
+    // ajenos a preparar un envío de documentos para firma), o no se entendió.
+    // Si la IA mandó un clarify (redirect a medida), lo usamos; si no, avisamos
+    // que es fuera de ámbito y re-preguntamos el paso actual.
+    sdAddBot(intent && intent.clarify ? intent.clarify : t('chat.offTopic'));
     return sdAskStep(chatStep);
   }
 
@@ -330,8 +333,8 @@ function sdFinishChat() {
     const rec = recommend();
     const C = catalog();
     sdAddBot(isOneShot()
-      ? t('chat.done.pack', { name: C[rec].name })
-      : t('chat.done.plan', { name: C[rec].name }));
+      ? t('chat.done.pack', { name: planName(C[rec]) })
+      : t('chat.done.plan', { name: planName(C[rec]) }));
     sdChatActsEl().innerHTML = '';
     const b = document.createElement('button');
     b.className = 'sd-btn primary'; b.style.cssText = 'width:100%;justify-content:center';

@@ -122,7 +122,7 @@ const I18N = {
     'chat.info.oneshot': '<b>No need to subscribe to anything.</b> We have <b>one-time packs</b>: you pay for the batch, send it and you\'re done. No account, no renewal.',
     'chat.info.sometimes': '<b>A one-time pack works for you</b>: packs don\'t expire, so you use it when you need it.',
 
-    'chat.q.vol.oneshot': 'Good. <b>How many documents do you need to send in this batch?</b><br><br><i>Minimum is 10 sends.</i>',
+    'chat.q.vol.oneshot': 'Good. <b>How many documents do you need to send in this batch?</b>',
     'chat.q.vol.monthly': 'Perfect. To size it: <b>how many documents do you send to sign per month?</b>',
     'chat.opt.vol.low.oneshot': '10 to 100', 'chat.opt.vol.mid.oneshot': '100 to 500', 'chat.opt.vol.high.oneshot': 'More than 500',
     'chat.opt.vol.low.monthly': 'Up to 100', 'chat.opt.vol.mid.monthly': '100 to 1,000', 'chat.opt.vol.high.monthly': 'More than 1,000',
@@ -150,6 +150,7 @@ const I18N = {
     // chat misc
     'chat.gotIt': 'Got it 👍',
     'chat.notUnderstood': "I didn't quite catch that 🤔 — let me guide you. Pick the option that fits best:",
+    'chat.offTopic': "I can only help you set up your document signing (signature type, volume, how often, team) 🙂 — that's outside what I handle. Let's get back to it:",
     'chat.progress': '{i} of {total}',
     'chat.done.pack': 'Done 🎯 No need to subscribe: based on what you told me, the <b>{name}</b> fits you. Pay once and you\'re set.',
     'chat.done.plan': 'Done 🎯 Based on what you told me, the plan that fits you is <b>{name}</b>.<br><br>Here are the options so you can compare.',
@@ -291,7 +292,7 @@ const I18N = {
     'chat.info.oneshot': '<b>No necesitás suscribirte a nada.</b> Tenemos <b>packs de única vez</b>: pagás el lote, lo enviás y listo. Sin cuenta, sin renovación.',
     'chat.info.sometimes': '<b>Un pack de única vez te sirve</b>: los packs no vencen, así que lo usás cuando lo necesitás.',
 
-    'chat.q.vol.oneshot': 'Bien. <b>¿Cuántos documentos necesitás enviar en este lote?</b><br><br><i>El mínimo es 10 envíos.</i>',
+    'chat.q.vol.oneshot': 'Bien. <b>¿Cuántos documentos necesitás enviar en este lote?</b>',
     'chat.q.vol.monthly': 'Perfecto. Para dimensionarlo: <b>¿cuántos documentos enviás a firmar por mes?</b>',
     'chat.opt.vol.low.oneshot': '10 a 100', 'chat.opt.vol.mid.oneshot': '100 a 500', 'chat.opt.vol.high.oneshot': 'Más de 500',
     'chat.opt.vol.low.monthly': 'Hasta 100', 'chat.opt.vol.mid.monthly': '100 a 1.000', 'chat.opt.vol.high.monthly': 'Más de 1.000',
@@ -317,6 +318,7 @@ const I18N = {
 
     'chat.gotIt': 'Perfecto 👍',
     'chat.notUnderstood': 'No te entendí del todo 🤔 — dejame guiarte. Elegí la opción que mejor encaje:',
+    'chat.offTopic': 'Solo puedo ayudarte a preparar tu envío de documentos para firma (tipo de firma, volumen, cada cuánto, equipo) 🙂 — eso queda fuera de lo que manejo. Volvamos a eso:',
     'chat.progress': '{i} de {total}',
     'chat.done.pack': 'Listo 🎯 No hace falta suscribirse: por lo que me contaste, te sirve el <b>{name}</b>. Pagás una vez y quedás.',
     'chat.done.plan': 'Listo 🎯 Por lo que me contaste, el plan que te sirve es <b>{name}</b>.<br><br>Acá están las opciones para que compares.',
