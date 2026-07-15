@@ -14,8 +14,261 @@
 </head>
 <body>
 
-<!-- ===== LAUNCHER ===== -->
-<div class="launcher-overlay" id="launcherOverlay">
+<!-- ===== ONBOARDING (Smart Dispatch) ===== -->
+<div class="sd-top">
+  <div class="sd-logo">SD</div>
+  <h1>Smart Dispatch</h1>
+  <span class="sd-crumb" id="sdCrumb">Empezar</span>
+  <div class="sd-right" id="sdTopRight">
+    <span class="sd-pill">demo · pagos simulados</span>
+  </div>
+</div>
+
+<div class="sd-wrap">
+
+  <!-- 0. FORK -->
+  <section class="sd-screen on" id="s-fork">
+    <div class="sd-hero">
+      <h2>Empecemos</h2>
+      <p>Convertí un documento y una base de datos en un lote de PDFs listos para firmar. Contanos quién sos y armamos tu plan.</p>
+    </div>
+    <div class="sd-fork">
+      <div class="sd-fork-card" onclick="sdGo('s-client')">
+        <div class="ic" style="background:var(--sig-primary-light);color:var(--sig-primary-dark)">🔑</div>
+        <h3>Ya soy cliente</h3>
+        <p>Tenés cuenta activa de Signaturit o eSAW. Entrá con tu token y usá la herramienta.</p>
+        <div class="cta">Entrar con mi token →</div>
+      </div>
+      <div class="sd-fork-card" onclick="sdGo('s-quiz')">
+        <div class="ic" style="background:#fff0e8;color:#e85a28">✨</div>
+        <h3>Quiero empezar</h3>
+        <p>Todavía no sos cliente. Respondé unas preguntas y te recomendamos el plan que te sirve.</p>
+        <div class="cta">Armar mi plan →</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1. CLIENTE -->
+  <section class="sd-screen" id="s-client">
+    <div class="sd-hero">
+      <h2>Entrá con tu token</h2>
+      <p>Tus credenciales viven solo en esta sesión. No guardamos tokens, documentos ni datos.</p>
+    </div>
+    <div class="sd-qbox" style="max-width:460px">
+      <div class="sd-q">
+        <div class="sd-qlab">Producto de firma</div>
+        <div class="sd-opts">
+          <div class="sd-opt sel" onclick="sdPickOne(this)"><span class="sd-radio"></span> Signaturit</div>
+          <div class="sd-opt" onclick="sdPickOne(this)"><span class="sd-radio"></span> eSignAnywhere (eSAW)</div>
+        </div>
+      </div>
+      <div class="sd-field" style="margin-top:15px">
+        <label>Token de API</label>
+        <input type="password" id="sdTok" value="demo_token_no_se_guarda">
+      </div>
+      <div class="sd-chat-hint">🔒 El token viaja en el header de cada request y se descarta. Nunca toca disco ni base de datos.</div>
+    </div>
+    <div class="sd-nav">
+      <button class="sd-btn ghost" onclick="sdGo('s-fork')">← Volver</button>
+      <button class="sd-btn teal" onclick="sdEnterAsClient()">Entrar a la herramienta →</button>
+    </div>
+  </section>
+
+  <!-- 2. CHAT -->
+  <section class="sd-screen" id="s-quiz">
+    <div class="sd-mini-steps"><div class="sd-ms on"></div><div class="sd-ms"></div><div class="sd-ms"></div></div>
+    <div class="sd-hero">
+      <h2>Contanos qué necesitás</h2>
+      <p>Charlemos un minuto y te armamos el plan que te sirve, sin venderte de más.</p>
+    </div>
+    <div class="sd-chat-shell">
+      <div class="sd-chat-bar">
+        <div class="av">SD</div>
+        <div>
+          <div class="nm">Asistente Smart Dispatch</div>
+          <div class="st">en línea</div>
+        </div>
+      </div>
+      <div class="sd-chat-log" id="sdChatLog"></div>
+      <div class="sd-chat-actions" id="sdChatActions"></div>
+    </div>
+    <div class="sd-nav" style="max-width:620px">
+      <button class="sd-btn ghost" onclick="sdResetChat()">← Empezar de nuevo</button>
+      <span class="sd-chat-hint" id="sdChatProgress"></span>
+    </div>
+  </section>
+
+  <!-- 3. PLANES -->
+  <section class="sd-screen" id="s-plans">
+    <div class="sd-mini-steps"><div class="sd-ms on"></div><div class="sd-ms on"></div><div class="sd-ms"></div></div>
+    <div class="sd-hero">
+      <h2 id="sdPlansTitle">Tu plan recomendado</h2>
+      <p id="sdPlanWhy"></p>
+    </div>
+    <div class="sd-plans" id="sdPlansBox"></div>
+    <div style="text-align:center;margin-top:20px">
+      <button class="sd-btn ghost" onclick="sdGo('s-quiz')">← Cambiar respuestas</button>
+    </div>
+  </section>
+
+  <!-- 4. CHECKOUT -->
+  <section class="sd-screen" id="s-pay">
+    <div class="sd-mini-steps"><div class="sd-ms on"></div><div class="sd-ms on"></div><div class="sd-ms on"></div></div>
+    <div class="sd-hero">
+      <h2>Confirmá tu suscripción</h2>
+      <p>Pago simulado para la demo. No se procesa ninguna tarjeta real.</p>
+    </div>
+    <div class="sd-checkout">
+      <div class="sd-co-head">
+        <div><div class="lbl" id="sdPayPlanName">Plan Pro</div><div class="amt" id="sdPayAmount">€49</div></div>
+        <div class="sd-co-stripe">Stripe</div>
+      </div>
+      <div class="sd-co-body">
+        <div class="sd-co-summary" id="sdPaySummary"></div>
+        <div class="sd-field"><label>Email</label><input type="text" value="demo@empresa.com"></div>
+        <div class="sd-field"><label>Número de tarjeta</label><input type="text" value="4242 4242 4242 4242"></div>
+        <div class="sd-field-row">
+          <div class="sd-field"><label>Vencimiento</label><input type="text" value="12 / 28"></div>
+          <div class="sd-field"><label>CVC</label><input type="text" value="123"></div>
+        </div>
+        <button class="sd-btn primary" id="sdPayBtn" style="width:100%;justify-content:center;margin-top:5px" onclick="sdPay()">Pagar y empezar</button>
+        <!-- Integración dummy. En producción: Stripe Checkout / Billing + webhook de confirmación. -->
+        <div class="sd-dummy-note">🧪 Integración dummy. En producción sería Stripe Checkout / Billing con webhook de confirmación.</div>
+      </div>
+    </div>
+    <div class="sd-nav" style="max-width:460px"><button class="sd-btn ghost" onclick="sdGo('s-plans')">← Elegir otro plan</button><span></span></div>
+  </section>
+
+  <!-- 5. DONE -->
+  <section class="sd-screen" id="s-done">
+    <div class="sd-done">
+      <div class="ring">✓</div>
+      <h2 id="sdDoneTitle">¡Todo listo!</h2>
+      <p id="sdDoneSub"></p>
+      <div class="sd-recap" id="sdRecap"></div>
+      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdEnterBuilder()">Ir al PDF Builder →</button>
+    </div>
+  </section>
+
+  <!-- 6. PDF BUILDER (dentro del mismo flujo) -->
+  <section class="sd-screen" id="s-builder">
+    <div class="sdb-grid">
+      <div class="sdb-col">
+        <!-- 1. Documento base -->
+        <div class="sdb-card">
+          <h3><span class="sdb-num">1</span> Documento base</h3>
+          <div class="sdb-tabs">
+            <button class="sdb-tab on" id="sdbTabUpload" onclick="sdbSetDocMode('upload')">Subir archivo</button>
+            <button class="sdb-tab" id="sdbTabWrite" onclick="sdbSetDocMode('write')">Escribir o pegar</button>
+          </div>
+
+          <div id="sdbModeUpload">
+            <label class="sdb-drop" id="sdbDropDoc">
+              <input type="file" id="sdbFileDoc" accept=".docx,.txt">
+              <div id="sdbDropDocLabel">Subí tu <b>plantilla.docx</b> o <b>.txt</b><br><span class="sdb-sub">con o sin variables — las detectamos solas</span></div>
+            </label>
+          </div>
+
+          <div id="sdbModeWrite" style="display:none">
+            <textarea class="sdb-editor" id="sdbDocEditor" placeholder="Pegá tu contrato acá, tal cual lo tenés.
+
+No hace falta ningún formato especial. Podés escribir:
+
+  Nombre del cliente: ________________
+  con domicilio en [dirección]
+  Firma: ____________
+
+...y nosotros detectamos los campos."></textarea>
+            <div class="sdb-editor-tools">
+              <button class="sdb-mini-btn" id="sdbBtnDetectIA" disabled onclick="sdbDetectWithIA()">🔒 Detectar con IA</button>
+              <button class="sdb-mini-btn" onclick="sdbDetectManual()">Detectar por patrones</button>
+              <button class="sdb-mini-btn" onclick="sdbLoadSample()">Ver ejemplo</button>
+            </div>
+            <div class="sdb-detect-note" id="sdbDetectNote"></div>
+            <div id="sdbFieldsEditor" style="margin-top:10px"></div>
+          </div>
+
+          <div class="sdb-hint" id="sdbDocHint">Podés pegar el texto como venga: guiones bajos, <code>[corchetes]</code> o espacios en blanco. También funcionan las <code>{{variables}}</code> si ya las usás.</div>
+          <div class="sdb-vars" id="sdbVarsBox"></div>
+        </div>
+
+        <!-- 2. Datos -->
+        <div class="sdb-card">
+          <h3><span class="sdb-num">2</span> Datos</h3>
+          <label class="sdb-drop" id="sdbDropData">
+            <input type="file" id="sdbFileData" accept=".csv,.json,.xlsx,.xls">
+            <div id="sdbDropDataLabel">Subí <b>datos.csv / .xlsx / .json</b></div>
+          </label>
+          <div class="sdb-hint" id="sdbDataInfo"></div>
+          <div class="sdb-quota" id="sdbQuotaBox" style="display:none"><span>Uso del plan</span><span id="sdbQuotaTxt"></span></div>
+        </div>
+
+        <!-- 3. Marca -->
+        <div class="sdb-card">
+          <h3><span class="sdb-num">3</span> Marca</h3>
+          <div class="sdb-row">
+            <label>Color</label>
+            <input type="color" id="sdbBrandColor" value="#00B4B6">
+            <input type="text" id="sdbBrandHex" value="#00B4B6" class="sdb-hexin">
+          </div>
+          <div class="sdb-row">
+            <label>Título</label>
+            <input type="text" id="sdbDocTitle" value="Contrato de servicios">
+          </div>
+          <div class="sdb-row">
+            <label>Fuente</label>
+            <select id="sdbBrandFont">
+              <option value="'Inter',sans-serif">Inter (sans)</option>
+              <option value="Georgia,serif">Georgia (serif)</option>
+              <option value="'Times New Roman',serif">Times (serif)</option>
+              <option value="Arial,sans-serif">Arial (sans)</option>
+            </select>
+          </div>
+          <div class="sdb-iabox locked" id="sdbIaBox">
+            <div class="sdb-iahead"><span>✨</span> <span id="sdbIaTitle">Capa de IA</span></div>
+            <p id="sdbIaDesc">Subí tu manual de marca y la IA extrae los colores y la tipografía automáticamente.</p>
+            <button class="btn sdb-btn-ia" id="sdbIaBtn" disabled onclick="sdbRunIA()">Extraer marca del brandbook</button>
+          </div>
+          <label class="sdb-toggle"><input type="checkbox" id="sdbRevealAnchors"> Mostrar anclas de firma (en el PDF quedan invisibles)</label>
+        </div>
+
+        <!-- 4. Generar -->
+        <div class="sdb-card">
+          <h3><span class="sdb-num">4</span> Generar</h3>
+          <button class="btn btn-primary sdb-full" id="sdbGenBtn" disabled>Generar PDFs</button>
+          <div class="sdb-hint" id="sdbGenHint">Cargá el documento y los datos para habilitar.</div>
+          <div id="sdbResults" class="sdb-results"></div>
+        </div>
+
+        <div class="sd-nav" style="margin-top:0">
+          <button class="sd-btn ghost" onclick="sdGo('s-done')">← Volver</button>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="sdb-col">
+        <div class="sdb-card sdb-sticky">
+          <div class="sdb-prevhead">
+            <h3><span class="sdb-num navy">👁</span> Vista previa</h3>
+            <div class="sdb-pager" id="sdbPager"></div>
+          </div>
+          <div class="sdb-paper">
+            <div class="sdb-paper-inner" id="sdbPreview">
+              <div class="sdb-empty">Subí un documento para ver la vista previa con tus datos.</div>
+            </div>
+          </div>
+          <div class="sdb-banner" id="sdbAnchorBanner" style="display:none">
+            <b>Anclas de firma detectadas.</b> Viajan invisibles en el PDF; el envío las pasará como ancla al producto de firma (Signaturit / eSAW).
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ===== LAUNCHER (envío — se alcanza vía el puente builder→envío) ===== -->
+<div class="launcher-overlay hidden" id="launcherOverlay">
   <div class="launcher">
     <div class="launcher-header">
       <div class="launcher-logo">MS</div>
@@ -321,98 +574,9 @@
   </div>
 </div>
 
-<!-- ===== PDF BUILDER (Smart Dispatch) ===== -->
-<section id="s-builder" class="sdb-screen">
-  <div class="sdb-topbar">
-    <div class="sdb-logo">SD</div>
-    <div class="sdb-title">Smart Dispatch · <span>PDF Builder</span></div>
-    <button class="btn btn-secondary btn-small sdb-back" onclick="closeBuilder()">← Salir</button>
-  </div>
-
-  <div class="sdb-grid">
-    <div class="sdb-col">
-      <!-- 1. Documento base -->
-      <div class="sdb-card">
-        <h3><span class="sdb-num">1</span> Documento base</h3>
-        <label class="sdb-drop" id="sdbDropDoc">
-          <input type="file" id="sdbFileDoc" accept=".docx">
-          <div id="sdbDropDocLabel">Subí tu <b>plantilla.docx</b><br><span class="sdb-sub">con variables entre llaves dobles</span></div>
-        </label>
-        <div class="sdb-hint">Usá <code>{{variable}}</code> para datos y <code>{{firma_x}}</code> como ancla de firma. El producto de firma coloca la firma en el ancla, sin coordenadas.</div>
-        <div class="sdb-vars" id="sdbVarsBox"></div>
-      </div>
-
-      <!-- 2. Datos -->
-      <div class="sdb-card">
-        <h3><span class="sdb-num">2</span> Datos</h3>
-        <label class="sdb-drop" id="sdbDropData">
-          <input type="file" id="sdbFileData" accept=".csv,.json,.xlsx,.xls">
-          <div id="sdbDropDataLabel">Subí <b>datos.csv / .xlsx / .json</b></div>
-        </label>
-        <div class="sdb-hint" id="sdbDataInfo"></div>
-      </div>
-
-      <!-- 3. Marca -->
-      <div class="sdb-card">
-        <h3><span class="sdb-num">3</span> Marca</h3>
-        <div class="sdb-row">
-          <label>Color</label>
-          <input type="color" id="sdbBrandColor" value="#00B4B6">
-          <input type="text" id="sdbBrandHex" value="#00B4B6" class="sdb-hexin">
-        </div>
-        <div class="sdb-row">
-          <label>Título</label>
-          <input type="text" id="sdbDocTitle" value="Contrato de servicios">
-        </div>
-        <div class="sdb-row">
-          <label>Fuente</label>
-          <select id="sdbBrandFont">
-            <option value="'Inter',sans-serif">Inter (sans)</option>
-            <option value="Georgia,serif">Georgia (serif)</option>
-            <option value="'Times New Roman',serif">Times (serif)</option>
-            <option value="Arial,sans-serif">Arial (sans)</option>
-          </select>
-        </div>
-        <div class="sdb-iabox locked" id="sdbIaBox">
-          <div class="sdb-iahead"><span>✨</span> Capa de IA · próximamente</div>
-          <p>En modo manual elegís color, título y tipografía. Más adelante la IA extrae la marca de tu brandbook y pre-completa esto por vos.</p>
-          <button class="btn sdb-btn-ia" disabled>🔒 Disponible más adelante</button>
-        </div>
-        <label class="sdb-toggle"><input type="checkbox" id="sdbRevealAnchors"> Mostrar anclas de firma (en el PDF quedan invisibles)</label>
-      </div>
-
-      <!-- 4. Generar -->
-      <div class="sdb-card">
-        <h3><span class="sdb-num">4</span> Generar</h3>
-        <button class="btn btn-primary sdb-full" id="sdbGenBtn" disabled>Generar PDFs</button>
-        <div class="sdb-hint" id="sdbGenHint">Cargá el documento y los datos para habilitar.</div>
-        <div id="sdbResults" class="sdb-results"></div>
-      </div>
-    </div>
-
-    <div class="sdb-col">
-      <div class="sdb-card sdb-sticky">
-        <div class="sdb-prevhead">
-          <h3><span class="sdb-num navy">👁</span> Vista previa</h3>
-          <div class="sdb-pager" id="sdbPager"></div>
-        </div>
-        <div class="sdb-paper">
-          <div class="sdb-paper-inner" id="sdbPreview">
-            <div class="sdb-empty">Subí un documento para ver la vista previa con tus datos.</div>
-          </div>
-        </div>
-        <div class="sdb-banner" id="sdbAnchorBanner" style="display:none">
-          <b>Anclas de firma detectadas.</b> Viajan invisibles en el PDF; el envío las pasará como ancla al producto de firma (Signaturit / eSAW).
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Entrada TEMPORAL de desarrollo. La reemplaza el onboarding de Hernán. -->
-<button id="sdbDevEntry" onclick="showBuilder()" title="Abrir PDF Builder (dev)">🛠 PDF Builder</button>
-
 <script src="app.js"></script>
+<script src="js/onboarding.js"></script>
+<script src="js/plans.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/providers/signaturit.js"></script>
 </body>
