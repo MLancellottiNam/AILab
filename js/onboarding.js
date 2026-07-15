@@ -155,17 +155,6 @@ const FLOW = [
     reply: (v) => t('chat.reply.vol.' + v + '.' + (isOneShot() ? 'oneshot' : 'monthly'))
   },
   {
-    key: 'ia',
-    bot: () => t('chat.q.ia'),
-    opts: () => [
-      { label: t('chat.opt.ia.yes'), v: 'yes' },
-      { label: t('chat.opt.ia.no'), v: 'no' },
-      { label: t('chat.opt.ia.explain'), v: 'explain' }
-    ],
-    info: (v) => (v === 'explain' ? null : t('chat.info.ia.' + v)),
-    reply: (v) => t('chat.reply.ia.' + v)
-  },
-  {
     key: 'team',
     skipIf: () => isOneShot(),
     bot: () => t('chat.q.team'),
@@ -238,23 +227,6 @@ function sdHandlePick(st, o) {
   sdAddMe(st.reply(o.v));
   sdClearChips();
 
-  // Caso especial: explicar la IA y volver a preguntar
-  if (st.key === 'ia' && o.v === 'explain') {
-    sdTyping(true);
-    setTimeout(() => {
-      sdTyping(false);
-      sdAddBot(t('chat.ia.exampleIntro'));
-      setTimeout(() => {
-        sdAddInfo(t('chat.ia.example'));
-        setTimeout(() => {
-          sdAddBot(t('chat.ia.so'));
-          sdSetChips([{ label: t('chat.opt.ia.yes'), v: 'yes' }, { label: t('chat.opt.ia.no'), v: 'no' }], (o2) => sdHandlePick(st, o2));
-        }, 700);
-      }, 500);
-    }, 700);
-    return;
-  }
-
   A[st.key] = o.v;
 
   // Tipo de firma: fija operationType y asigna el proveedor INTERNAMENTE. El
@@ -301,6 +273,9 @@ async function sdSubmitText(e) {
 
   sdTyping(false);
 
+  // Guardamos si el tipo de firma ya estaba fijado ANTES de aplicar, para no
+  // repetir el 💡 explicativo si la interpretación lo vuelve a inferir.
+  const hadSigType = A.sigType != null;
   const applied = intent ? sdApplyIntent(intent) : [];
 
   if (!applied.length) {
@@ -312,13 +287,19 @@ async function sdSubmitText(e) {
   // Confirmamos lo entendido y seguimos por el primer paso sin responder.
   if (intent.reply) sdAddBot(intent.reply);
   else sdAddBot(t('chat.gotIt'));
-  sdAdvanceFromIntent();
+
+  // El 💡 con la descripción del tipo de firma recomendado también en el camino
+  // por texto libre (igual que al elegir un chip): si la interpretación fijó el
+  // tipo de firma, lo explicamos antes de seguir con la próxima pregunta.
+  const info = !hadSigType && applied.includes('sigType') && intent.sigType ? t('chat.info.' + intent.sigType) : null;
+  if (info) setTimeout(() => sdAddInfo(info), 400);
+  setTimeout(sdAdvanceFromIntent, info ? 1100 : 0);
 }
 
 /* Aplica al estado A los campos válidos que trajo el intent. Devuelve la lista
    de campos aplicados. Maneja sigType especial (proveedor + provider msg). */
 function sdApplyIntent(intent) {
-  const order = ['sigType', 'freq', 'vol', 'ia', 'team'];
+  const order = ['sigType', 'freq', 'vol', 'team'];
   const applied = [];
   order.forEach(k => {
     if (intent[k] == null) return;
@@ -362,7 +343,7 @@ function sdFinishChat() {
 
 function sdResetChat() {
   chatStep = 0;
-  A.sigType = A.product = A.freq = A.vol = A.ia = A.team = null;
+  A.sigType = A.product = A.freq = A.vol = A.team = null;
   sdChatLogEl().innerHTML = ''; sdChatActsEl().innerHTML = '';
   sdAskStep(0);
 }
@@ -387,7 +368,7 @@ function sdRenderClientDone() {
   sd$('sdDoneTitle').textContent = ACC.isClient ? t('done.title.client') : t('done.title.new');
   sd$('sdDoneSub').textContent = ACC.isClient ? t('done.sub.client') : t('done.sub.new', { plan: ACC.plan });
   sd$('sdRecap').innerHTML = `
-    <div class="r"><span>${ACC.isClient ? t('recap.type') : t('recap.plan')}</span><span>${ACC.isClient ? t('recap.existingCustomer') : ACC.plan}${ACC.ia ? '<span class="sd-badge-ia">AI</span>' : ''}</span></div>
+    <div class="r"><span>${ACC.isClient ? t('recap.type') : t('recap.plan')}</span><span>${ACC.isClient ? t('recap.existingCustomer') : ACC.plan}${ACC.ia ? '<span class="sd-badge-ia">ND</span>' : ''}</span></div>
     <div class="r"><span>${t('recap.token')}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">${mask(ACC.token)} · ${t('recap.inMemory')}</span></div>
     <div class="r"><span>${t('recap.persistence')}</span><span style="color:var(--success)">${t('recap.none')}</span></div>
     <div class="r"><span>${t('recap.aiLayer')}</span><span style="color:${ACC.ia ? 'var(--success)' : 'var(--text-muted)'}">${ACC.ia ? t('recap.enabled') : t('recap.manual')}</span></div>`;
