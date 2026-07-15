@@ -20,7 +20,8 @@ const builderState = {
   signAnchors: [],   // anclas de firma
   previewIdx: 0,
   dispatchDocs: [],  // DispatchDoc[] de la última corrida (en memoria)
-  detected: []       // campos detectados en el editor libre
+  detected: [],      // campos detectados en el editor libre
+  logoDataUrl: ''    // logo de marca (dataURL en memoria, cero persistencia)
 };
 
 /* ===== Helpers locales ===== */
@@ -478,6 +479,35 @@ function sdbSyncBrand() {
   sdb$('sdbBrandHex').value = c;
   sdbRenderPreview();
 }
+
+/* Logo de marca: lo guardamos como dataURL en memoria (cero persistencia) y
+   aparece en el header del PDF. */
+async function sdbHandleLogo(files) {
+  const f = files && files[0];
+  if (!f) return;
+  if (!/^image\//.test(f.type)) { sdbNote('The logo must be an image (PNG or JPG).', 'warn'); return; }
+  try {
+    builderState.logoDataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(new Error('read_error'));
+      r.readAsDataURL(f);
+    });
+    const lbl = sdb$('sdbLogoLabel');
+    if (lbl) lbl.innerHTML = `✓ Logo: <b>${sdbEsc(f.name)}</b> <span class="sdb-sub" style="cursor:pointer;text-decoration:underline" onclick="sdbClearLogo()">remove</span>`;
+    sdbRenderPreview();
+  } catch (e) {
+    sdbNote('Could not read the logo image.', 'warn');
+  }
+}
+function sdbClearLogo() {
+  builderState.logoDataUrl = '';
+  const lbl = sdb$('sdbLogoLabel');
+  if (lbl) lbl.textContent = '';
+  const inp = sdb$('sdbFileLogo');
+  if (inp) inp.value = '';
+  sdbRenderPreview();
+}
 // Botón "Extract brand from brand book": abre el selector de PDF. El trabajo
 // real lo hace sdbExtractBrand() al elegir archivo.
 function sdbRunIA() {
@@ -556,6 +586,92 @@ function sdbFillTemplate(html, row) {
   });
   return out;
 }
+
+/* Fecha de emisión formateada según el idioma elegido en el redactor. */
+function sdbIssueDate() {
+  const lang = (sdb$('sdbLang') && sdb$('sdbLang').value) || 'en';
+  try { return new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date()); }
+  catch (e) { return new Date().toLocaleDateString(); }
+}
+
+/* Contraste legible (blanco/oscuro) sobre el color de marca del header. */
+function sdbTextOn(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+  if (!m) return '#fff';
+  const n = parseInt(m[1], 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1a2332' : '#ffffff';
+}
+
+/* ========================================
+   CONSTRUCTOR ÚNICO DEL DOCUMENTO (WYSIWYG: preview === PDF)
+   Header con logo + fecha, cuerpo redactado, bloque de firma estilizado, footer.
+   ======================================== */
+function sdbBuildDocEl(row, idx) {
+  const rows = typeof dataRows !== 'undefined' ? dataRows : [];
+  const title = sdb$('sdbDocTitle').value || 'Document';
+  const font = sdb$('sdbBrandFont').value;
+  const brand = sdb$('sdbBrandColor').value;
+  const onBrand = sdbTextOn(brand);
+  const dateStr = sdbIssueDate();
+  const reveal = sdb$('sdbRevealAnchors') && sdb$('sdbRevealAnchors').checked;
+  const nameKey = (typeof dataHeaders !== 'undefined' ? dataHeaders : []).find(h => /nombre|name|cliente/i.test(h));
+  const recipient = (nameKey && row && row[nameKey]) ? String(row[nameKey]) : '';
+  const total = rows.length;
+
+  const page = document.createElement('div');
+  page.className = 'sdb-page';
+  page.style.cssText = `font-family:${font};color:#1a2332;background:#fff;width:794px;box-sizing:border-box;font-size:13.5px;line-height:1.75`;
+
+  const logo = builderState.logoDataUrl
+    ? `<img src="${builderState.logoDataUrl}" alt="logo" style="height:46px;width:auto;max-width:200px;object-fit:contain;display:block">`
+    : '';
+
+  page.innerHTML = `
+    <div style="background:${brand};color:${onBrand};padding:24px 48px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+      <div style="display:flex;align-items:center;gap:16px;min-width:0">
+        ${logo}
+        <div style="font-size:22px;font-weight:800;letter-spacing:.2px">${sdbEsc(title)}</div>
+      </div>
+      <div style="text-align:right;font-size:11px;line-height:1.5;font-family:monospace;opacity:.92;white-space:nowrap">
+        <div>${sdbEsc(dateStr)}</div>
+        <div>${row ? `Recipient ${idx + 1}${total ? ' / ' + total : ''}` : 'Sample · placeholders'}</div>
+      </div>
+    </div>
+    <div class="sdb-body" style="padding:34px 48px 40px">
+      ${sdbFillTemplate(builderState.docHtml, row)}
+    </div>
+    <div style="border-top:1px solid #e6e9ef;margin:0 48px;padding:14px 0 20px;font-size:10px;color:#9aa4b2;display:flex;justify-content:space-between;font-family:monospace">
+      <span>${sdbEsc(title)}</span><span>Generated with Smart Dispatch</span>
+    </div>`;
+
+  // Espaciado de párrafos (por si el CSS de la hoja no aplica en el PDF).
+  page.querySelectorAll('.sdb-body p').forEach(p => { p.style.margin = '0 0 12px'; });
+
+  // Bloque de firma estilizado: donde el redactor puso el ancla, dibujamos una
+  // línea con caption. El texto del ancla queda invisible (para el envío) salvo
+  // que "reveal" esté activo. (Nota: el PDF de html2pdf es imagen; la extracción
+  // del ancla como texto la resuelve el puente de envío — pendiente aparte.)
+  page.querySelectorAll('.sdb-sign-anchor').forEach(a => {
+    const anchorText = a.getAttribute('data-anchor') || a.textContent || 'sign';
+    const wrap = document.createElement('span');
+    wrap.style.cssText = 'display:inline-block;text-align:center;margin:8px 4px 2px;vertical-align:bottom';
+    const line = document.createElement('span');
+    line.style.cssText = 'display:block;min-width:250px;border-bottom:1.6px solid #1a2332;height:30px;line-height:30px';
+    const inner = document.createElement('span');
+    inner.textContent = anchorText;
+    inner.style.cssText = reveal ? `color:${brand};font-size:11px;font-family:monospace` : 'color:transparent;font-size:1px';
+    line.appendChild(inner);
+    const cap = document.createElement('span');
+    cap.style.cssText = 'display:block;font-size:10px;color:#5f6b7a;margin-top:5px;font-family:monospace';
+    cap.textContent = `Signature${recipient ? ' · ' + recipient : ''} · ${dateStr}`;
+    wrap.appendChild(line);
+    wrap.appendChild(cap);
+    a.replaceWith(wrap);
+  });
+
+  return page;
+}
+
 function sdbRenderPreview() {
   const box = sdb$('sdbPreview');
   if (!builderState.docHtml) {
@@ -565,12 +681,13 @@ function sdbRenderPreview() {
   }
   const rows = typeof dataRows !== 'undefined' ? dataRows : [];
   const row = rows[builderState.previewIdx] || null;
-  box.style.fontFamily = sdb$('sdbBrandFont').value;
-  box.innerHTML = `
-    <div class="sdb-doc-bar"></div>
-    <div class="sdb-doc-title">${sdbEsc(sdb$('sdbDocTitle').value || 'Document')}</div>
-    <div class="sdb-doc-meta">${row ? `Recipient ${builderState.previewIdx + 1} of ${rows.length}` : 'No data · placeholders shown'}</div>
-    ${sdbFillTemplate(builderState.docHtml, row)}`;
+  const el = sdbBuildDocEl(row, builderState.previewIdx);
+  // Encajar el ancho A4 (794px) dentro de la caja de preview.
+  el.style.maxWidth = '100%';
+  box.innerHTML = '';
+  box.style.padding = '0';
+  box.style.overflow = 'hidden';
+  box.appendChild(el);
   sdb$('sdbPager').textContent = rows.length ? `${builderState.previewIdx + 1} / ${rows.length}` : '';
 }
 
@@ -623,28 +740,41 @@ async function sdbGenerate() {
   builderState.dispatchDocs = [];
 
   const title = sdb$('sdbDocTitle').value || 'Document';
-  const font = sdb$('sdbBrandFont').value;
-  const brand = sdb$('sdbBrandColor').value;
   const headers = typeof dataHeaders !== 'undefined' ? dataHeaders : [];
   const nameKey = headers.find(h => /nombre|name|cliente/i.test(h));
   const n = acc.limit === Infinity ? rows.length : Math.min(rows.length, acc.limit);
 
+  // Esperamos a que las fuentes (Google Fonts) estén listas: si rasterizamos
+  // antes, html2canvas puede producir una página en blanco.
+  if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+
   for (let i = 0; i < n; i++) {
     const row = rows[i];
-    const el = document.createElement('div');
-    el.style.cssText = `font-family:${font};font-size:13px;line-height:1.7;color:#1a2332;padding:40px 48px;width:720px;background:#fff`;
-    el.innerHTML = `
-      <div style="height:5px;background:${brand};margin:-40px -48px 26px"></div>
-      <div style="font-size:20px;font-weight:700;color:${brand};margin-bottom:4px">${sdbEsc(title)}</div>
-      <div style="font-size:11px;color:#5f6b7a;margin-bottom:20px;font-family:monospace">Recipient ${i + 1}</div>
-      ${sdbFillTemplate(builderState.docHtml, row)}`;
-    // Anclas de firma: pintadas del color de fondo → invisibles en el PDF
-    el.querySelectorAll('.sdb-sign-anchor').forEach(a => { a.style.color = '#fff'; a.style.background = '#fff'; a.style.border = 'none'; });
+    const el = sdbBuildDocEl(row, i);
+
+    // Adjuntamos el nodo CON layout real, en pantalla pero invisible
+    // (opacity:0 detrás de todo). Posicionarlo en left:-10000 hace que
+    // html2canvas capture con coordenada negativa y recorte la izquierda; y un
+    // nodo sin layout se rasteriza con alto 0 → PDF en blanco.
+    const stage = document.createElement('div');
+    stage.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;opacity:0;z-index:-1;pointer-events:none';
+    stage.appendChild(el);
+    document.body.appendChild(stage);
 
     const fname = `${sdbSlug(title)}_${sdbSlug(String((nameKey && row[nameKey]) || ('doc_' + (i + 1))))}.pdf`;
-    const opts = { margin: 0, filename: fname, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'pt', format: 'a4' } };
+    const opts = {
+      margin: 0, filename: fname,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'pt', format: 'a4' }
+    };
 
-    const blob = await html2pdf().set(opts).from(el).outputPdf('blob');
+    let blob;
+    try {
+      blob = await html2pdf().set(opts).from(el).outputPdf('blob');
+    } finally {
+      document.body.removeChild(stage);
+    }
     sdbDownload(blob, fname);
     builderState.dispatchDocs.push(sdbBuildDispatchDoc(row, blob));
 
@@ -681,6 +811,8 @@ function sdbInit() {
   sdb$('sdbFileData').addEventListener('change', e => sdbHandleData(e.target.files));
   const brandInp = sdb$('sdbFileBrand');
   if (brandInp) brandInp.addEventListener('change', e => sdbExtractBrand(e.target.files));
+  const logoInp = sdb$('sdbFileLogo');
+  if (logoInp) logoInp.addEventListener('change', e => sdbHandleLogo(e.target.files));
   sdb$('sdbDocEditor').addEventListener('input', sdbEditorLive); // preview en vivo + soltar columnas
 
   sdb$('sdbBrandColor').addEventListener('input', sdbSyncBrand);
