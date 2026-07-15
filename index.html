@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Multi Send Signaturit</title>
+  <title>Smart Dispatch</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
@@ -16,11 +16,12 @@
 
 <!-- ===== ONBOARDING (Smart Dispatch) ===== -->
 <div class="sd-top">
+  <button class="sd-back-btn" id="sdBack" onclick="goBack()" title="Back (Esc)" style="display:none">←</button>
   <div class="sd-logo">SD</div>
   <h1>Smart Dispatch</h1>
-  <span class="sd-crumb" id="sdCrumb">Empezar</span>
+  <span class="sd-crumb" id="sdCrumb">Start</span>
   <div class="sd-right" id="sdTopRight">
-    <span class="sd-pill">demo · pagos simulados</span>
+    <span class="sd-pill">demo · simulated payments</span>
   </div>
 </div>
 
@@ -29,21 +30,21 @@
   <!-- 0. FORK -->
   <section class="sd-screen on" id="s-fork">
     <div class="sd-hero">
-      <h2>Empecemos</h2>
-      <p>Convertí un documento y una base de datos en un lote de PDFs listos para firmar. Contanos quién sos y armamos tu plan.</p>
+      <h2>Let's get started</h2>
+      <p>Turn a document and a data source into a batch of PDFs ready to sign. Tell us who you are and we'll build your plan.</p>
     </div>
     <div class="sd-fork">
       <div class="sd-fork-card" onclick="sdGo('s-client')">
         <div class="ic" style="background:var(--sig-primary-light);color:var(--sig-primary-dark)">🔑</div>
-        <h3>Ya soy cliente</h3>
-        <p>Tenés cuenta activa de Signaturit o eSAW. Entrá con tu token y usá la herramienta.</p>
-        <div class="cta">Entrar con mi token →</div>
+        <h3>I'm already a customer</h3>
+        <p>You have an active Signaturit or eSAW account. Sign in with your token and use the tool.</p>
+        <div class="cta">Sign in with my token →</div>
       </div>
       <div class="sd-fork-card" onclick="sdGo('s-quiz')">
         <div class="ic" style="background:#fff0e8;color:#e85a28">✨</div>
-        <h3>Quiero empezar</h3>
-        <p>Todavía no sos cliente. Respondé unas preguntas y te recomendamos el plan que te sirve.</p>
-        <div class="cta">Armar mi plan →</div>
+        <h3>I want to start</h3>
+        <p>Not a customer yet. Answer a few questions and we'll recommend the plan that fits you.</p>
+        <div class="cta">Build my plan →</div>
       </div>
     </div>
   </section>
@@ -51,26 +52,26 @@
   <!-- 1. CLIENTE -->
   <section class="sd-screen" id="s-client">
     <div class="sd-hero">
-      <h2>Entrá con tu token</h2>
-      <p>Tus credenciales viven solo en esta sesión. No guardamos tokens, documentos ni datos.</p>
+      <h2>Sign in with your token</h2>
+      <p>Your credentials live only in this session. We don't store tokens, documents or data.</p>
     </div>
     <div class="sd-qbox" style="max-width:460px">
       <div class="sd-q">
-        <div class="sd-qlab">Producto de firma</div>
+        <div class="sd-qlab">Signature product</div>
         <div class="sd-opts">
           <div class="sd-opt sel" onclick="sdPickOne(this)"><span class="sd-radio"></span> Signaturit</div>
           <div class="sd-opt" onclick="sdPickOne(this)"><span class="sd-radio"></span> eSignAnywhere (eSAW)</div>
         </div>
       </div>
       <div class="sd-field" style="margin-top:15px">
-        <label>Token de API</label>
-        <input type="password" id="sdTok" value="demo_token_no_se_guarda">
+        <label>API token</label>
+        <input type="password" id="sdTok" value="demo_token_not_stored">
       </div>
-      <div class="sd-chat-hint">🔒 El token viaja en el header de cada request y se descarta. Nunca toca disco ni base de datos.</div>
+      <div class="sd-chat-hint">🔒 The token travels in each request header and is discarded. It never touches disk or a database.</div>
     </div>
     <div class="sd-nav">
-      <button class="sd-btn ghost" onclick="sdGo('s-fork')">← Volver</button>
-      <button class="sd-btn teal" onclick="sdEnterAsClient()">Entrar a la herramienta →</button>
+      <button class="sd-btn ghost" onclick="sdGo('s-fork')">← Back</button>
+      <button class="sd-btn teal" onclick="sdEnterAsClient()">Enter the tool →</button>
     </div>
   </section>
 
@@ -78,22 +79,22 @@
   <section class="sd-screen" id="s-quiz">
     <div class="sd-mini-steps"><div class="sd-ms on"></div><div class="sd-ms"></div><div class="sd-ms"></div></div>
     <div class="sd-hero">
-      <h2>Contanos qué necesitás</h2>
-      <p>Charlemos un minuto y te armamos el plan que te sirve, sin venderte de más.</p>
+      <h2>Tell us what you need</h2>
+      <p>Let's chat for a minute and we'll build the plan that fits you, without overselling.</p>
     </div>
     <div class="sd-chat-shell">
       <div class="sd-chat-bar">
         <div class="av">SD</div>
         <div>
-          <div class="nm">Asistente Smart Dispatch</div>
-          <div class="st">en línea</div>
+          <div class="nm">Smart Dispatch Assistant</div>
+          <div class="st">online</div>
         </div>
       </div>
       <div class="sd-chat-log" id="sdChatLog"></div>
       <div class="sd-chat-actions" id="sdChatActions"></div>
     </div>
     <div class="sd-nav" style="max-width:620px">
-      <button class="sd-btn ghost" onclick="sdResetChat()">← Empezar de nuevo</button>
+      <button class="sd-btn ghost" onclick="sdResetChat()">← Start over</button>
       <span class="sd-chat-hint" id="sdChatProgress"></span>
     </div>
   </section>
@@ -102,12 +103,12 @@
   <section class="sd-screen" id="s-plans">
     <div class="sd-mini-steps"><div class="sd-ms on"></div><div class="sd-ms on"></div><div class="sd-ms"></div></div>
     <div class="sd-hero">
-      <h2 id="sdPlansTitle">Tu plan recomendado</h2>
+      <h2 id="sdPlansTitle">Your recommended plan</h2>
       <p id="sdPlanWhy"></p>
     </div>
     <div class="sd-plans" id="sdPlansBox"></div>
     <div style="text-align:center;margin-top:20px">
-      <button class="sd-btn ghost" onclick="sdGo('s-quiz')">← Cambiar respuestas</button>
+      <button class="sd-btn ghost" onclick="sdGo('s-quiz')">← Change answers</button>
     </div>
   </section>
 
@@ -115,38 +116,121 @@
   <section class="sd-screen" id="s-pay">
     <div class="sd-mini-steps"><div class="sd-ms on"></div><div class="sd-ms on"></div><div class="sd-ms on"></div></div>
     <div class="sd-hero">
-      <h2>Confirmá tu suscripción</h2>
-      <p>Pago simulado para la demo. No se procesa ninguna tarjeta real.</p>
+      <h2>Confirm your subscription</h2>
+      <p>Simulated payment for the demo. No real card is charged.</p>
     </div>
     <div class="sd-checkout">
       <div class="sd-co-head">
-        <div><div class="lbl" id="sdPayPlanName">Plan Pro</div><div class="amt" id="sdPayAmount">€49</div></div>
+        <div><div class="lbl" id="sdPayPlanName">Pro plan</div><div class="amt" id="sdPayAmount">€49</div></div>
         <div class="sd-co-stripe">Stripe</div>
       </div>
       <div class="sd-co-body">
         <div class="sd-co-summary" id="sdPaySummary"></div>
-        <div class="sd-field"><label>Email</label><input type="text" value="demo@empresa.com"></div>
-        <div class="sd-field"><label>Número de tarjeta</label><input type="text" value="4242 4242 4242 4242"></div>
+        <div class="sd-field"><label>Email</label><input type="text" value="demo@company.com"></div>
+        <div class="sd-field"><label>Card number</label><input type="text" value="4242 4242 4242 4242"></div>
         <div class="sd-field-row">
-          <div class="sd-field"><label>Vencimiento</label><input type="text" value="12 / 28"></div>
+          <div class="sd-field"><label>Expiry</label><input type="text" value="12 / 28"></div>
           <div class="sd-field"><label>CVC</label><input type="text" value="123"></div>
         </div>
-        <button class="sd-btn primary" id="sdPayBtn" style="width:100%;justify-content:center;margin-top:5px" onclick="sdPay()">Pagar y empezar</button>
+        <button class="sd-btn primary" id="sdPayBtn" style="width:100%;justify-content:center;margin-top:5px" onclick="sdPay()">Pay and start</button>
         <!-- Integración dummy. En producción: Stripe Checkout / Billing + webhook de confirmación. -->
-        <div class="sd-dummy-note">🧪 Integración dummy. En producción sería Stripe Checkout / Billing con webhook de confirmación.</div>
+        <div class="sd-dummy-note">🧪 Dummy integration. In production this would be Stripe Checkout / Billing with a confirmation webhook.</div>
       </div>
     </div>
-    <div class="sd-nav" style="max-width:460px"><button class="sd-btn ghost" onclick="sdGo('s-plans')">← Elegir otro plan</button><span></span></div>
+    <div class="sd-nav" style="max-width:460px"><button class="sd-btn ghost" onclick="sdGo('s-plans')">← Choose another plan</button><span></span></div>
+  </section>
+
+  <!-- 4b. SIGN UP (new account — simulated API creation) -->
+  <section class="sd-screen" id="s-signup">
+    <div class="sd-hero">
+      <h2>Your details</h2>
+      <p>We create your signature account and hand you back a token. Nothing is stored on our side.</p>
+    </div>
+    <div class="sd-qbox" style="max-width:520px">
+      <div class="sd-field-row">
+        <div class="sd-field"><label>First name</label><input type="text" id="sdSuFirst" value="Marcos"></div>
+        <div class="sd-field"><label>Last name</label><input type="text" id="sdSuLast" value="Lancellotti"></div>
+      </div>
+      <div class="sd-field"><label>Email</label><input type="text" id="sdSuEmail" value="marcos@company.com"></div>
+      <div class="sd-field-row">
+        <div class="sd-field"><label>Company</label><input type="text" id="sdSuCompany" value="Acme Corp"></div>
+        <div class="sd-field"><label>Username</label><input type="text" id="sdSuUser" value="mlancellotti"></div>
+      </div>
+      <div class="sd-field"><label>Phone</label><input type="text" id="sdSuPhone" value="+34 600 000 000"></div>
+      <div class="sd-signup-note">ℹ️ Automatic account creation via API isn't available yet in Signaturit or eSAW. In this demo we simulate the round-trip.</div>
+    </div>
+    <div class="sd-nav">
+      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
+      <button class="sd-btn teal" onclick="sdSubmitSignup()">Create my account →</button>
+    </div>
+  </section>
+
+  <!-- 4c. TOKEN (simulated API response) -->
+  <section class="sd-screen" id="s-token">
+    <div class="sd-hero">
+      <h2>Your token</h2>
+      <p>This is the API round-trip that would happen against your signature provider.</p>
+    </div>
+    <div class="sd-token-wrap">
+      <div class="sd-console" id="sdConsole"></div>
+      <div class="sd-token-box" id="sdTokenBox" style="display:none">
+        <div class="lbl">Generated token (lives only in this session)</div>
+        <code id="sdTokenValue"></code>
+      </div>
+      <div class="sd-mail" id="sdMailPreview" style="display:none">
+        <div class="sd-mail-head">📧 Welcome email preview</div>
+        <div class="sd-mail-body" id="sdMailBody"></div>
+      </div>
+    </div>
+    <div class="sd-nav" style="max-width:620px">
+      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
+      <button class="sd-btn teal" id="sdTokenEnter" onclick="sdFinishSignup()" style="display:none">Enter with this token →</button>
+    </div>
   </section>
 
   <!-- 5. DONE -->
   <section class="sd-screen" id="s-done">
     <div class="sd-done">
       <div class="ring">✓</div>
-      <h2 id="sdDoneTitle">¡Todo listo!</h2>
+      <h2 id="sdDoneTitle">All set!</h2>
       <p id="sdDoneSub"></p>
       <div class="sd-recap" id="sdRecap"></div>
-      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdEnterBuilder()">Ir al PDF Builder →</button>
+      <button class="sd-btn teal" style="width:100%;justify-content:center;padding:13px" onclick="sdGo('s-sendtype')">Continue →</button>
+    </div>
+  </section>
+
+  <!-- 5b. SEND TYPE (reusa operationType del bulksend) -->
+  <section class="sd-screen" id="s-sendtype">
+    <div class="sd-hero">
+      <h2>What are you sending?</h2>
+      <p>Pick the request type. It's the same set the bulk sender already supports.</p>
+    </div>
+    <div class="sd-sendtypes">
+      <div class="sd-sendtype" data-type="advanced" onclick="sdPickSendType(this)">
+        <div class="ic">✍️</div>
+        <div class="tx"><h4>Advanced signature <span class="sd-rec-tag">Recommended</span></h4><p>Biometric or digital certificate</p></div>
+        <span class="sd-radio"></span>
+      </div>
+      <div class="sd-sendtype" data-type="simple" onclick="sdPickSendType(this)">
+        <div class="ic">☑️</div>
+        <div class="tx"><h4>Simple signature</h4><p>One-click signing</p></div>
+        <span class="sd-radio"></span>
+      </div>
+      <div class="sd-sendtype" data-type="email" onclick="sdPickSendType(this)">
+        <div class="ic">📧</div>
+        <div class="tx"><h4>Certified email</h4><p>Certify your communications</p></div>
+        <span class="sd-radio"></span>
+      </div>
+      <div class="sd-sendtype" data-type="sms" onclick="sdPickSendType(this)">
+        <div class="ic">💬</div>
+        <div class="tx"><h4>Certified SMS</h4><p>Certify your text messages</p></div>
+        <span class="sd-radio"></span>
+      </div>
+    </div>
+    <div class="sd-sendtype-note" id="sdSendTypeNote" style="display:none"></div>
+    <div class="sd-nav">
+      <button class="sd-btn ghost" onclick="goBack()">← Back</button>
+      <button class="sd-btn teal" id="sdSendTypeNext" disabled onclick="sdContinueSendType()">Continue →</button>
     </div>
   </section>
 
@@ -156,67 +240,71 @@
       <div class="sdb-col">
         <!-- 1. Documento base -->
         <div class="sdb-card">
-          <h3><span class="sdb-num">1</span> Documento base</h3>
+          <h3><span class="sdb-num">1</span> Base document</h3>
           <div class="sdb-tabs">
-            <button class="sdb-tab on" id="sdbTabUpload" onclick="sdbSetDocMode('upload')">Subir archivo</button>
-            <button class="sdb-tab" id="sdbTabWrite" onclick="sdbSetDocMode('write')">Escribir o pegar</button>
+            <button class="sdb-tab on" id="sdbTabUpload" onclick="sdbSetDocMode('upload')">Upload file</button>
+            <button class="sdb-tab" id="sdbTabWrite" onclick="sdbSetDocMode('write')">Write or paste</button>
           </div>
 
           <div id="sdbModeUpload">
             <label class="sdb-drop" id="sdbDropDoc">
               <input type="file" id="sdbFileDoc" accept=".docx,.txt">
-              <div id="sdbDropDocLabel">Subí tu <b>plantilla.docx</b> o <b>.txt</b><br><span class="sdb-sub">con o sin variables — las detectamos solas</span></div>
+              <div id="sdbDropDocLabel">Upload your <b>template.docx</b> or <b>.txt</b><br><span class="sdb-sub">with or without variables — we detect them for you</span></div>
             </label>
           </div>
 
           <div id="sdbModeWrite" style="display:none">
-            <textarea class="sdb-editor" id="sdbDocEditor" placeholder="Pegá tu contrato acá, tal cual lo tenés.
+            <textarea class="sdb-editor" id="sdbDocEditor" placeholder="Paste your contract here, exactly as you have it.
 
-No hace falta ningún formato especial. Podés escribir:
+No special format needed. You can write:
 
-  Nombre del cliente: ________________
-  con domicilio en [dirección]
-  Firma: ____________
+  Client name: ________________
+  domiciled at [address]
+  Signature: ____________
 
-...y nosotros detectamos los campos."></textarea>
+...and we detect the fields."></textarea>
+            <div class="sdb-col-tray" id="sdbColTray" style="display:none">
+              <div class="sdb-col-tray-lbl">Drag or click a column to insert it as a variable:</div>
+              <div class="sdb-col-chips" id="sdbColChips"></div>
+            </div>
             <div class="sdb-editor-tools">
-              <button class="sdb-mini-btn" id="sdbBtnDetectIA" disabled onclick="sdbDetectWithIA()">🔒 Detectar con IA</button>
-              <button class="sdb-mini-btn" onclick="sdbDetectManual()">Detectar por patrones</button>
-              <button class="sdb-mini-btn" onclick="sdbLoadSample()">Ver ejemplo</button>
+              <button class="sdb-mini-btn" id="sdbBtnDetectIA" disabled onclick="sdbDetectWithIA()">🔒 Detect with AI</button>
+              <button class="sdb-mini-btn" onclick="sdbDetectManual()">Detect by patterns</button>
+              <button class="sdb-mini-btn" onclick="sdbLoadSample()">See example</button>
             </div>
             <div class="sdb-detect-note" id="sdbDetectNote"></div>
             <div id="sdbFieldsEditor" style="margin-top:10px"></div>
           </div>
 
-          <div class="sdb-hint" id="sdbDocHint">Podés pegar el texto como venga: guiones bajos, <code>[corchetes]</code> o espacios en blanco. También funcionan las <code>{{variables}}</code> si ya las usás.</div>
+          <div class="sdb-hint" id="sdbDocHint">You can paste the text however it comes: underscores, <code>[brackets]</code> or blank spaces. <code>{{variables}}</code> also work if you already use them.</div>
           <div class="sdb-vars" id="sdbVarsBox"></div>
         </div>
 
-        <!-- 2. Datos -->
+        <!-- 2. Data -->
         <div class="sdb-card">
-          <h3><span class="sdb-num">2</span> Datos</h3>
+          <h3><span class="sdb-num">2</span> Data</h3>
           <label class="sdb-drop" id="sdbDropData">
             <input type="file" id="sdbFileData" accept=".csv,.json,.xlsx,.xls">
-            <div id="sdbDropDataLabel">Subí <b>datos.csv / .xlsx / .json</b></div>
+            <div id="sdbDropDataLabel">Upload <b>data.csv / .xlsx / .json</b></div>
           </label>
           <div class="sdb-hint" id="sdbDataInfo"></div>
-          <div class="sdb-quota" id="sdbQuotaBox" style="display:none"><span>Uso del plan</span><span id="sdbQuotaTxt"></span></div>
+          <div class="sdb-quota" id="sdbQuotaBox" style="display:none"><span>Plan usage</span><span id="sdbQuotaTxt"></span></div>
         </div>
 
-        <!-- 3. Marca -->
+        <!-- 3. Brand -->
         <div class="sdb-card">
-          <h3><span class="sdb-num">3</span> Marca</h3>
+          <h3><span class="sdb-num">3</span> Brand</h3>
           <div class="sdb-row">
             <label>Color</label>
             <input type="color" id="sdbBrandColor" value="#00B4B6">
             <input type="text" id="sdbBrandHex" value="#00B4B6" class="sdb-hexin">
           </div>
           <div class="sdb-row">
-            <label>Título</label>
-            <input type="text" id="sdbDocTitle" value="Contrato de servicios">
+            <label>Title</label>
+            <input type="text" id="sdbDocTitle" value="Service agreement">
           </div>
           <div class="sdb-row">
-            <label>Fuente</label>
+            <label>Font</label>
             <select id="sdbBrandFont">
               <option value="'Inter',sans-serif">Inter (sans)</option>
               <option value="Georgia,serif">Georgia (serif)</option>
@@ -225,23 +313,23 @@ No hace falta ningún formato especial. Podés escribir:
             </select>
           </div>
           <div class="sdb-iabox locked" id="sdbIaBox">
-            <div class="sdb-iahead"><span>✨</span> <span id="sdbIaTitle">Capa de IA</span></div>
-            <p id="sdbIaDesc">Subí tu manual de marca y la IA extrae los colores y la tipografía automáticamente.</p>
-            <button class="btn sdb-btn-ia" id="sdbIaBtn" disabled onclick="sdbRunIA()">Extraer marca del brandbook</button>
+            <div class="sdb-iahead"><span>✨</span> <span id="sdbIaTitle">AI layer</span></div>
+            <p id="sdbIaDesc">Upload your brand book and the AI extracts colors and typography automatically.</p>
+            <button class="btn sdb-btn-ia" id="sdbIaBtn" disabled onclick="sdbRunIA()">Extract brand from brand book</button>
           </div>
-          <label class="sdb-toggle"><input type="checkbox" id="sdbRevealAnchors"> Mostrar anclas de firma (en el PDF quedan invisibles)</label>
+          <label class="sdb-toggle"><input type="checkbox" id="sdbRevealAnchors"> Show signature anchors (they stay invisible in the PDF)</label>
         </div>
 
-        <!-- 4. Generar -->
+        <!-- 4. Generate -->
         <div class="sdb-card">
-          <h3><span class="sdb-num">4</span> Generar</h3>
-          <button class="btn btn-primary sdb-full" id="sdbGenBtn" disabled>Generar PDFs</button>
-          <div class="sdb-hint" id="sdbGenHint">Cargá el documento y los datos para habilitar.</div>
+          <h3><span class="sdb-num">4</span> Generate</h3>
+          <button class="btn btn-primary sdb-full" id="sdbGenBtn" disabled>Generate PDFs</button>
+          <div class="sdb-hint" id="sdbGenHint">Load the document and the data to enable.</div>
           <div id="sdbResults" class="sdb-results"></div>
         </div>
 
         <div class="sd-nav" style="margin-top:0">
-          <button class="sd-btn ghost" onclick="sdGo('s-done')">← Volver</button>
+          <button class="sd-btn ghost" onclick="sdGo('s-done')">← Back</button>
           <span></span>
         </div>
       </div>
@@ -249,16 +337,16 @@ No hace falta ningún formato especial. Podés escribir:
       <div class="sdb-col">
         <div class="sdb-card sdb-sticky">
           <div class="sdb-prevhead">
-            <h3><span class="sdb-num navy">👁</span> Vista previa</h3>
+            <h3><span class="sdb-num navy">👁</span> Preview</h3>
             <div class="sdb-pager" id="sdbPager"></div>
           </div>
           <div class="sdb-paper">
             <div class="sdb-paper-inner" id="sdbPreview">
-              <div class="sdb-empty">Subí un documento para ver la vista previa con tus datos.</div>
+              <div class="sdb-empty">Upload a document to see the preview with your data.</div>
             </div>
           </div>
           <div class="sdb-banner" id="sdbAnchorBanner" style="display:none">
-            <b>Anclas de firma detectadas.</b> Viajan invisibles en el PDF; el envío las pasará como ancla al producto de firma (Signaturit / eSAW).
+            <b>Signature anchors detected.</b> They travel invisibly in the PDF; sending will pass them as anchors to the signature product (Signaturit / eSAW).
           </div>
         </div>
       </div>
@@ -577,6 +665,7 @@ No hace falta ningún formato especial. Podés escribir:
 <script src="app.js"></script>
 <script src="js/onboarding.js"></script>
 <script src="js/plans.js"></script>
+<script src="js/signup.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/providers/signaturit.js"></script>
 </body>

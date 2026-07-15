@@ -51,23 +51,24 @@ function sdbOnEnter() {
   const box = sdb$('sdbIaBox'), iaBtn = sdb$('sdbIaBtn');
   if (acc.ia) {
     box.classList.remove('locked');
-    sdb$('sdbIaTitle').textContent = 'Capa de IA';
-    sdb$('sdbIaDesc').textContent = 'Incluida en tu plan. Subí tu manual de marca y la IA extraerá colores y tipografía. (En integración.)';
-    iaBtn.textContent = '✨ Extraer marca del brandbook · próximamente';
+    sdb$('sdbIaTitle').textContent = 'AI layer';
+    sdb$('sdbIaDesc').textContent = 'Included in your plan. Upload your brand book and the AI will extract colors and typography. (In progress.)';
+    iaBtn.textContent = '✨ Extract brand from brand book · coming soon';
   } else {
     box.classList.add('locked');
-    sdb$('sdbIaTitle').textContent = 'Capa de IA · no incluida';
-    sdb$('sdbIaDesc').textContent = 'Tu plan usa el modo manual. Con el plan Pro, la IA extrae la marca, coloca los campos y mapea los datos por vos.';
-    iaBtn.textContent = '🔒 Disponible en el plan Pro';
+    sdb$('sdbIaTitle').textContent = 'AI layer · not included';
+    sdb$('sdbIaDesc').textContent = 'Your plan uses manual mode. With the Pro plan, the AI extracts the brand, places the fields and maps the data for you.';
+    iaBtn.textContent = '🔒 Available on the Pro plan';
   }
   iaBtn.disabled = true; // sin proxy todavía
 
   // Botón "Detectar con IA" (paso 1) — mismo criterio, apagado hasta el proxy.
   const detBtn = sdb$('sdbBtnDetectIA');
   detBtn.disabled = true;
-  detBtn.textContent = acc.ia ? '✨ Detectar con IA · próximamente' : '🔒 Detectar con IA (plan Pro)';
+  detBtn.textContent = acc.ia ? '✨ Detect with AI · coming soon' : '🔒 Detect with AI (Pro plan)';
 
   sdbUpdQuota();
+  sdbSyncColTray();
   sdbCheckReady();
 }
 
@@ -81,6 +82,7 @@ function sdbSetDocMode(m) {
   sdb$('sdbTabWrite').classList.toggle('on', m === 'write');
   sdb$('sdbModeUpload').style.display = m === 'upload' ? '' : 'none';
   sdb$('sdbModeWrite').style.display = m === 'write' ? '' : 'none';
+  if (m === 'write') sdbSyncColTray();
 }
 
 /* ---- Subir archivo (.docx / .txt) ---- */
@@ -93,13 +95,13 @@ async function sdbHandleDoc(files) {
     const t = await f.text();
     sdbSetDocMode('write');
     sdb$('sdbDocEditor').value = t;
-    sdbNote('Texto cargado. Detectá los campos para continuar.', 'ok');
+    sdbNote('Text loaded. Detect the fields to continue.', 'ok');
     return;
   }
-  if (!name.endsWith('.docx')) { alert('Subí un .docx o un .txt'); return; }
+  if (!name.endsWith('.docx')) { alert('Upload a .docx or a .txt'); return; }
 
   const label = sdb$('sdbDropDocLabel');
-  label.innerHTML = 'Procesando…';
+  label.innerHTML = 'Processing…';
   try {
     const arrayBuffer = await f.arrayBuffer();
     const res = await mammoth.convertToHtml({ arrayBuffer });
@@ -112,19 +114,19 @@ async function sdbHandleDoc(files) {
       builderState.docHtml = '';
       sdbSetDocMode('write');
       sdb$('sdbDocEditor').value = plain;
-      sdbNote('Tu documento no usa <code>{{variables}}</code> — no hay problema. Detectá los campos por patrones y seguimos.', 'warn');
+      sdbNote('Your document doesn\'t use <code>{{variables}}</code> — no problem. Detect the fields by patterns and we continue.', 'warn');
       return;
     }
     sdbSplitVars(all);
     sdb$('sdbDropDoc').classList.add('ok');
-    label.innerHTML = `✓ <b>${sdbEsc(f.name)}</b><br><span class="sdb-sub">${all.length} variable(s) detectada(s)</span>`;
+    label.innerHTML = `✓ <b>${sdbEsc(f.name)}</b><br><span class="sdb-sub">${all.length} variable(s) detected</span>`;
     sdbRenderVarChips();
     sdbRenderPreview();
     sdbCheckReady();
   } catch (err) {
     sdb$('sdbDropDoc').classList.remove('ok');
-    label.innerHTML = 'Subí tu <b>plantilla.docx</b> o <b>.txt</b><br><span class="sdb-sub">con o sin variables — las detectamos solas</span>';
-    alert('Error al leer el documento: ' + err.message);
+    label.innerHTML = 'Upload your <b>template.docx</b> or <b>.txt</b><br><span class="sdb-sub">with or without variables — we detect them for you</span>';
+    alert('Error reading the document: ' + err.message);
   }
 }
 
@@ -157,8 +159,8 @@ function sdbScanFields(txt, smart) {
   [...txt.matchAll(/_{3,}/g)].forEach(m => {
     if (found.some(f => f.pos === m.index)) return;
     let lab = smart ? sdbLabelFrom(txt.slice(Math.max(0, m.index - 60), m.index)) : '';
-    if (!lab) { i++; lab = 'Campo ' + i; }
-    push(m[0], lab, sdbSlug(lab) || ('campo_' + (++i)), m.index);
+    if (!lab) { i++; lab = 'Field ' + i; }
+    push(m[0], lab, sdbSlug(lab) || ('field_' + (++i)), m.index);
   });
   found.sort((a, b) => a.pos - b.pos);
   found.forEach(f => { if (looksLikeSign(f.label)) f.type = 'signature'; });
@@ -166,35 +168,35 @@ function sdbScanFields(txt, smart) {
 }
 function sdbDetectManual() {
   const txt = sdb$('sdbDocEditor').value.trim();
-  if (!txt) { sdbNote('Escribí o pegá algo primero.', 'warn'); return; }
+  if (!txt) { sdbNote('Write or paste something first.', 'warn'); return; }
   const found = sdbScanFields(txt, false);
-  if (!found.length) { sdbNote('No encontré espacios para completar. Probá con guiones bajos (____), [corchetes] o <code>{{variables}}</code>.', 'warn'); return; }
+  if (!found.length) { sdbNote('I couldn\'t find any blanks to fill. Try underscores (____), [brackets] or <code>{{variables}}</code>.', 'warn'); return; }
   sdbRenderFieldsEditor(found);
-  sdbNote(`Encontré <b>${found.length} campos</b> por patrones. Poneles nombre y marcá cuál es la firma.`, 'ok');
+  sdbNote(`Found <b>${found.length} fields</b> by patterns. Name them and mark which one is the signature.`, 'ok');
 }
-const SDB_SAMPLE = `CONTRATO DE PÓLIZA DE SEGURO
+const SDB_SAMPLE = `INSURANCE POLICY AGREEMENT
 
-Por el presente, la aseguradora formaliza la contratación de la póliza número ____________ con el asegurado ________________, titular del documento [documento], con domicilio en ________________, de la ciudad de ____________.
+The insurer hereby formalizes policy number ____________ with the insured ________________, holder of ID [id number], domiciled at ________________, in the city of ____________.
 
-DATOS DE LA COBERTURA
+COVERAGE DETAILS
 
-El contrato ampara al asegurado bajo la modalidad [tipo de cobertura], con una suma asegurada de ____________ y una prima mensual de __________. La vigencia comienza el día ____________.
+The agreement covers the insured under the [coverage type] modality, with an insured sum of ____________ and a monthly premium of __________. Coverage begins on ____________.
 
-CONFORMIDAD Y FIRMA
+ACKNOWLEDGMENT AND SIGNATURE
 
-En prueba de conformidad, el asegurado firma el presente contrato.
+In witness whereof, the insured signs this agreement.
 
-Firma del asegurado: ________________________`;
+Insured's signature: ________________________`;
 
 function sdbLoadSample() {
   sdb$('sdbDocEditor').value = SDB_SAMPLE;
-  sdbNote('Ejemplo cargado. Probá <b>Detectar por patrones</b>.', 'ok');
+  sdbNote('Example loaded. Try <b>Detect by patterns</b>.', 'ok');
 }
 
 function sdbDetectWithIA() {
   // Apagado hasta el proxy real de Claude. El botón está disabled; esto es un salvavidas.
   // TODO(IA): reemplazar por llamada al proxy Claude → JSON de campos {label,type}.
-  sdbNote('La detección con IA se habilita cuando conectemos el proxy de Claude. Por ahora usá <b>Detectar por patrones</b>.', 'warn');
+  sdbNote('AI detection is enabled once we connect the Claude proxy. For now use <b>Detect by patterns</b>.', 'warn');
 }
 
 /* ---- Editor de campos detectados ---- */
@@ -218,7 +220,7 @@ function sdbRenderFieldsEditor(found) {
   const btn = document.createElement('button');
   btn.className = 'sd-btn teal';
   btn.style.cssText = 'width:100%;justify-content:center;margin-top:9px;font-size:13px;padding:9px';
-  btn.textContent = 'Confirmar campos y usar este documento';
+  btn.textContent = 'Confirm fields and use this document';
   btn.onclick = sdbApplyDetected;
   box.appendChild(btn);
 }
@@ -230,16 +232,70 @@ function sdbApplyDetected() {
   let txt = sdb$('sdbDocEditor').value;
   // Reemplazar de atrás para adelante para no romper los índices
   [...builderState.detected].sort((a, b) => b.pos - a.pos).forEach(f => {
-    const name = f.type === 'signature' ? (looksLikeSign(f.guess) ? f.guess : 'firma_' + f.guess) : f.guess;
+    const name = f.type === 'signature' ? (looksLikeSign(f.guess) ? f.guess : 'sign_' + f.guess) : f.guess;
     txt = txt.slice(0, f.pos) + `{{${name}}}` + txt.slice(f.pos + f.raw.length);
   });
-  // Texto plano → HTML simple, y de acá sigue el pipeline de siempre
+  sdb$('sdbDocEditor').value = txt; // dejamos las {{variables}} visibles en el editor
+  sdbApplyEditorText(txt);
+  sdbNote(`✓ Document ready: <b>${builderState.dataVars.length} data field(s)</b> and <b>${builderState.signAnchors.length} signature(s)</b>. You can cross your data now.`, 'ok');
+}
+
+/* Texto libre (con {{variables}}) → docHtml + pipeline. Reusado por el editor
+   en vivo (drag&drop de columnas) y por la detección por patrones. */
+function sdbApplyEditorText(txt) {
   builderState.docHtml = txt.split(/\n{2,}/).map(p => `<p>${sdbEsc(p).replace(/\n/g, '<br>')}</p>`).join('');
   sdbSplitVars(sdbExtractVars(builderState.docHtml));
   sdbRenderVarChips();
   sdbRenderPreview();
   sdbCheckReady();
-  sdbNote(`✓ Documento listo: <b>${builderState.dataVars.length} dato(s)</b> y <b>${builderState.signAnchors.length} firma(s)</b>. Ya podés cruzar tus datos.`, 'ok');
+}
+
+/* Editor en vivo: si ya hay {{variables}} en el texto, actualiza al instante.
+   Si no (texto con ____ / [corchetes]), espera a "Detect by patterns". */
+function sdbEditorLive() {
+  const txt = sdb$('sdbDocEditor').value;
+  if (/\{\{/.test(txt)) sdbApplyEditorText(txt);
+}
+
+/* ---- Bandeja de columnas arrastrables (aparece cuando hay CSV) ---- */
+function sdbSyncColTray() {
+  const tray = sdb$('sdbColTray'), chips = sdb$('sdbColChips');
+  if (!tray) return;
+  const headers = typeof dataHeaders !== 'undefined' ? dataHeaders : [];
+  if (!headers.length) { tray.style.display = 'none'; return; }
+  chips.innerHTML = '';
+  // Chip de ancla de firma (no viene del CSV)
+  const signChip = document.createElement('span');
+  signChip.className = 'sdb-col-chip sign';
+  signChip.textContent = '✍ sign';
+  signChip.draggable = true;
+  signChip.dataset.token = '{{sign}}';
+  chips.appendChild(signChip);
+  // Chips de columnas del CSV
+  headers.forEach(h => {
+    const c = document.createElement('span');
+    c.className = 'sdb-col-chip';
+    c.textContent = h;
+    c.draggable = true;
+    c.dataset.token = `{{${h}}}`;
+    chips.appendChild(c);
+  });
+  chips.querySelectorAll('.sdb-col-chip').forEach(c => {
+    c.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', c.dataset.token));
+    c.addEventListener('click', () => sdbInsertAtCursor(c.dataset.token));
+  });
+  tray.style.display = 'block';
+}
+
+function sdbInsertAtCursor(token) {
+  const ta = sdb$('sdbDocEditor');
+  const s = ta.selectionStart != null ? ta.selectionStart : ta.value.length;
+  const e = ta.selectionEnd != null ? ta.selectionEnd : ta.value.length;
+  ta.value = ta.value.slice(0, s) + token + ta.value.slice(e);
+  const pos = s + token.length;
+  ta.focus();
+  ta.setSelectionRange(pos, pos);
+  sdbEditorLive();
 }
 
 function sdbRenderVarChips() {
@@ -275,9 +331,10 @@ function sdbOnDataLoaded(fileName, format) {
   if (!rows.length) return;
   builderState.previewIdx = 0;
   sdb$('sdbDropData').classList.add('ok');
-  sdb$('sdbDropDataLabel').innerHTML = `✓ <b>${sdbEsc(fileName)}</b> (${format})<br><span class="sdb-sub">${rows.length} filas · ${headers.length} columnas</span>`;
-  sdb$('sdbDataInfo').innerHTML = 'Columnas: ' + headers.map(h => `<code>${sdbEsc(h)}</code>`).join(' ');
+  sdb$('sdbDropDataLabel').innerHTML = `✓ <b>${sdbEsc(fileName)}</b> (${format})<br><span class="sdb-sub">${rows.length} rows · ${headers.length} columns</span>`;
+  sdb$('sdbDataInfo').innerHTML = 'Columns: ' + headers.map(h => `<code>${sdbEsc(h)}</code>`).join(' ');
   sdbUpdQuota();
+  sdbSyncColTray();
   sdbRenderPreview();
   sdbCheckReady();
 }
@@ -287,7 +344,7 @@ function sdbUpdQuota() {
   if (!rows.length) { sdb$('sdbQuotaBox').style.display = 'none'; return; }
   sdb$('sdbQuotaBox').style.display = 'flex';
   const over = rows.length > acc.limit;
-  sdb$('sdbQuotaTxt').innerHTML = `<b style="color:${over ? 'var(--error)' : 'var(--text)'}">${rows.length}</b> / ${acc.limit === Infinity ? '∞' : acc.limit} docs${acc.oneshot ? ' del pack' : ''}`;
+  sdb$('sdbQuotaTxt').innerHTML = `<b style="color:${over ? 'var(--error)' : 'var(--text)'}">${rows.length}</b> / ${acc.limit === Infinity ? '∞' : acc.limit} docs${acc.oneshot ? ' in pack' : ''}`;
 }
 
 /* ========================================
@@ -302,7 +359,7 @@ function sdbSyncBrand() {
 function sdbRunIA() {
   // Extracción del brandbook con IA — pendiente del proxy de Claude.
   // TODO(IA): subir brandbook (PDF) → proxy Claude → JSON {primary, secondary, font}.
-  sdbNote('La extracción de marca con IA se habilita cuando conectemos el proxy de Claude.', 'warn');
+  sdbNote('AI brand extraction is enabled once we connect the Claude proxy.', 'warn');
 }
 
 /* ========================================
@@ -324,7 +381,7 @@ function sdbFillTemplate(html, row) {
 function sdbRenderPreview() {
   const box = sdb$('sdbPreview');
   if (!builderState.docHtml) {
-    box.innerHTML = '<div class="sdb-empty">Subí un documento para ver la vista previa con tus datos.</div>';
+    box.innerHTML = '<div class="sdb-empty">Upload a document to see the preview with your data.</div>';
     sdb$('sdbPager').textContent = '';
     return;
   }
@@ -333,8 +390,8 @@ function sdbRenderPreview() {
   box.style.fontFamily = sdb$('sdbBrandFont').value;
   box.innerHTML = `
     <div class="sdb-doc-bar"></div>
-    <div class="sdb-doc-title">${sdbEsc(sdb$('sdbDocTitle').value || 'Documento')}</div>
-    <div class="sdb-doc-meta">${row ? `Destinatario ${builderState.previewIdx + 1} de ${rows.length}` : 'Sin datos · se muestran los marcadores'}</div>
+    <div class="sdb-doc-title">${sdbEsc(sdb$('sdbDocTitle').value || 'Document')}</div>
+    <div class="sdb-doc-meta">${row ? `Recipient ${builderState.previewIdx + 1} of ${rows.length}` : 'No data · placeholders shown'}</div>
     ${sdbFillTemplate(builderState.docHtml, row)}`;
   sdb$('sdbPager').textContent = rows.length ? `${builderState.previewIdx + 1} / ${rows.length}` : '';
 }
@@ -361,11 +418,11 @@ function sdbCheckReady() {
   const acc = sdbAcc();
   const ok = builderState.docHtml && rows.length;
   sdb$('sdbGenBtn').disabled = !ok;
-  if (!ok) { sdb$('sdbGenHint').textContent = 'Cargá el documento y los datos para habilitar.'; return; }
+  if (!ok) { sdb$('sdbGenHint').textContent = 'Load the document and the data to enable.'; return; }
   if (rows.length > acc.limit) {
-    sdb$('sdbGenHint').innerHTML = `<span style="color:var(--error)">⚠ ${rows.length} documentos supera el límite de tu plan (${acc.limit}). Se generan los primeros ${acc.limit}.</span>`;
+    sdb$('sdbGenHint').innerHTML = `<span style="color:var(--error)">⚠ ${rows.length} documents exceeds your plan limit (${acc.limit}). The first ${acc.limit} will be generated.</span>`;
   } else {
-    sdb$('sdbGenHint').textContent = `Listo para generar ${rows.length} PDF(s).`;
+    sdb$('sdbGenHint').textContent = `Ready to generate ${rows.length} PDF(s).`;
   }
 }
 
@@ -379,7 +436,7 @@ async function sdbGenerate() {
   sdb$('sdbResults').innerHTML = '';
   builderState.dispatchDocs = [];
 
-  const title = sdb$('sdbDocTitle').value || 'Documento';
+  const title = sdb$('sdbDocTitle').value || 'Document';
   const font = sdb$('sdbBrandFont').value;
   const brand = sdb$('sdbBrandColor').value;
   const headers = typeof dataHeaders !== 'undefined' ? dataHeaders : [];
@@ -393,7 +450,7 @@ async function sdbGenerate() {
     el.innerHTML = `
       <div style="height:5px;background:${brand};margin:-40px -48px 26px"></div>
       <div style="font-size:20px;font-weight:700;color:${brand};margin-bottom:4px">${sdbEsc(title)}</div>
-      <div style="font-size:11px;color:#5f6b7a;margin-bottom:20px;font-family:monospace">Destinatario ${i + 1}</div>
+      <div style="font-size:11px;color:#5f6b7a;margin-bottom:20px;font-family:monospace">Recipient ${i + 1}</div>
       ${sdbFillTemplate(builderState.docHtml, row)}`;
     // Anclas de firma: pintadas del color de fondo → invisibles en el PDF
     el.querySelectorAll('.sdb-sign-anchor').forEach(a => { a.style.color = '#fff'; a.style.background = '#fff'; a.style.border = 'none'; });
@@ -407,7 +464,7 @@ async function sdbGenerate() {
 
     const it = document.createElement('div');
     it.className = 'sdb-result-item';
-    it.innerHTML = `<span class="sdb-dot"></span><span class="sdb-fname">${sdbEsc(fname)}</span><span class="sdb-badge">generado</span>`;
+    it.innerHTML = `<span class="sdb-dot"></span><span class="sdb-fname">${sdbEsc(fname)}</span><span class="sdb-badge">generated</span>`;
     sdb$('sdbResults').appendChild(it);
     await new Promise(r => setTimeout(r, 110));
   }
@@ -415,7 +472,7 @@ async function sdbGenerate() {
   const done = document.createElement('div');
   done.className = 'sdb-done';
   const skipped = rows.length - n;
-  done.textContent = `✓ ${n} PDF(s) generados y descargados.` + (skipped > 0 ? ` (${skipped} fuera del límite del plan)` : '');
+  done.textContent = `✓ ${n} PDF(s) generated and downloaded.` + (skipped > 0 ? ` (${skipped} beyond the plan limit)` : '');
   sdb$('sdbResults').appendChild(done);
   btn.disabled = false;
 }
@@ -436,6 +493,7 @@ function sdbInit() {
 
   sdb$('sdbFileDoc').addEventListener('change', e => sdbHandleDoc(e.target.files));
   sdb$('sdbFileData').addEventListener('change', e => sdbHandleData(e.target.files));
+  sdb$('sdbDocEditor').addEventListener('input', sdbEditorLive); // preview en vivo + soltar columnas
 
   sdb$('sdbBrandColor').addEventListener('input', sdbSyncBrand);
   sdb$('sdbBrandHex').addEventListener('input', e => {
