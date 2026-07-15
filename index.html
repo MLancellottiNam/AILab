@@ -451,10 +451,51 @@
           <p>Certify your text messages</p>
         </div>
       </div>
+      <!-- Opción aparte: consultar estado de envíos ya hechos (no es un tipo de envío). -->
+      <div class="launcher-option launcher-option-alt" onclick="sdStatusOpen()">
+        <div class="launcher-option-icon" style="background:rgba(13,31,60,.1)">🔎</div>
+        <div class="launcher-option-text">
+          <h4>Check status</h4>
+          <p>Upload an exported CSV to check signature status</p>
+        </div>
+      </div>
     </div>
     <div class="launcher-actions">
       <div></div>
       <button class="btn btn-primary" id="launcherStart" disabled onclick="startApp()">Start</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CHECK STATUS (consulta de estado desde CSV exportado) ===== -->
+<div class="status-view" id="statusView" style="display:none">
+  <header class="app-header">
+    <div class="header-left">
+      <div class="header-logo">ND</div>
+      <div class="header-title">Namirial <span>Dispatch</span></div>
+      <span class="header-badge mode-tag">Check status</span>
+    </div>
+    <button class="btn-change-mode" onclick="sdStatusBack()">← Back to menu</button>
+  </header>
+  <div class="status-main">
+    <h2 class="section-title">Check signature status</h2>
+    <p class="section-desc">Upload the CSV you exported after sending. We query Signaturit for the current status of each signature. Nothing is stored.</p>
+
+    <div class="drop-zone" id="statusDropZone" onclick="document.getElementById('statusInput').click()">
+      <div class="drop-icon">📋</div>
+      <div class="drop-text">Drag the exported CSV or click</div>
+      <div class="drop-hint">Format: status,recipient,id_or_error</div>
+    </div>
+    <input type="file" id="statusInput" accept=".csv" style="display:none" onchange="sdStatusHandleFile(this.files)">
+
+    <div class="status-progress" id="statusProgress" style="display:none">
+      <div class="status-progress-bar"><div class="status-progress-fill" id="statusProgressFill"></div></div>
+      <div class="status-progress-txt" id="statusProgressTxt"></div>
+    </div>
+
+    <div class="table-container" id="statusResults" style="display:none">
+      <div class="table-header"><h3>Results</h3><div class="table-stats" id="statusStats"></div></div>
+      <div class="table-scroll"><table><thead id="statusHead"></thead><tbody id="statusBody"></tbody></table></div>
     </div>
   </div>
 </div>
@@ -743,6 +784,7 @@
 <script src="js/signup.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/bridge.js"></script>
+<script src="js/status.js"></script>
 <script src="js/providers/signaturit.js"></script>
 </body>
 </html>

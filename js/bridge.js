@@ -46,10 +46,12 @@ function sdbBridgeToSend() {
   //    estable por índice para evitar colisiones.
   pdfFiles = {};
   const md = docs.map((doc, i) => {
-    const fileName = `document_${i + 1}.pdf`;
-    pdfFiles[fileName.toLowerCase()] = { file: doc.pdf, size: doc.pdf.size };
     const email = (doc.recipient && doc.recipient.email) || '';
     const name = (doc.recipient && doc.recipient.name) || (email ? email.split('@')[0] : '');
+    // Nombre descriptivo por destinatario + índice (único, para el matching por nombre).
+    const base = (typeof sdbSlug === 'function' ? sdbSlug(name || email) : '') || 'document';
+    const fileName = `${base}_${i + 1}.pdf`;
+    pdfFiles[fileName.toLowerCase()] = { file: doc.pdf, size: doc.pdf.size };
     return {
       rawRow: (typeof dataRows !== 'undefined' && dataRows[i]) || {},
       signers: [{ email, name }],
@@ -61,6 +63,9 @@ function sdbBridgeToSend() {
     };
   });
   matchedData = md;
+
+  // Mostrar los PDFs generados como ADJUNTOS en el paso Files (lista de PDFs).
+  if (typeof renderPDFList === 'function') renderPDFList();
 
   // 2) Config del envío: proveedor Signaturit, tipo de operación, sin plantilla.
   operationType = sdbBridgeOperation();
@@ -98,10 +103,10 @@ function sdbBridgeToSend() {
   const subjToggle = document.getElementById('toggle-subject'), subjInput = document.getElementById('cfg-subject');
   if (subjToggle && subjInput && !subjInput.value.trim()) { subjToggle.checked = true; subjInput.value = title; subjToggle.dispatchEvent(new Event('change')); }
 
-  // 4) Ir DIRECTO al paso de envío (Send): los PDFs ya están generados y la
-  //    config viene del onboarding, así que el usuario ve los documentos listos
-  //    para mandar sin pasar por Setup/Files/Mapping. Puede volver con "← Back".
-  if (typeof goToStep === 'function') goToStep(4);
+  // 4) Entrar al flujo por el PASO 1 (Setup) y pasar por todos los pasos. El
+  //    Setup viene limpio (credenciales ocultas/precargadas); en el paso Files
+  //    los PDFs generados ya aparecen como adjuntos (renderPDFList arriba).
+  if (typeof goToStep === 'function') goToStep(1);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
   if (esawWanted) {
