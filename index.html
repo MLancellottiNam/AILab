@@ -477,17 +477,20 @@
 
 <!-- ===== CHECK STATUS (consulta de estado desde CSV exportado) ===== -->
 <div class="status-view" id="statusView" style="display:none">
-  <header class="app-header">
-    <div class="header-left">
-      <div class="header-logo">ND</div>
-      <div class="header-title">Namirial <span>Dispatch</span></div>
-      <span class="header-badge mode-tag">Check status</span>
+  <div class="sd-top">
+    <button class="sd-back-btn" onclick="sdStatusBack()" title="Back">←</button>
+    <div class="sd-logo">ND</div>
+    <h1>Namirial Dispatch</h1>
+    <span class="sd-crumb">Check status</span>
+    <div class="sd-right">
+      <span class="sd-pill" data-i18n="top.tagline">demo · simulated payments</span>
     </div>
-    <button class="btn-change-mode" onclick="sdStatusBack()">← Back</button>
-  </header>
-  <div class="status-main">
-    <h2 class="section-title">Check signature status</h2>
-    <p class="section-desc">Upload the CSV you exported after sending. We query Signaturit for the current status of each signature. Nothing is stored.</p>
+  </div>
+  <div class="sd-wrap">
+    <div class="sd-hero">
+      <h2>Check signature status</h2>
+      <p>Upload the CSV you exported after sending. We check Signaturit for the current status of each signature. Nothing is stored.</p>
+    </div>
 
     <div class="drop-zone" id="statusDropZone" onclick="document.getElementById('statusInput').click()">
       <div class="drop-icon">📋</div>

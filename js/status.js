@@ -40,8 +40,8 @@ function sdStatusOpen() {
   const wrapEl = document.querySelector('.sd-wrap');
   sdStatusOrigin = (wrapEl && getComputedStyle(wrapEl).display !== 'none') ? 'onboarding' : 'launcher';
 
-  // Ocultar todo lo que pudiera estar visible.
-  document.querySelectorAll('.sd-top, .sd-wrap').forEach(el => { el.style.display = 'none'; });
+  // Ocultar el onboarding (sd-top/sd-wrap), pero NO los del propio status view.
+  document.querySelectorAll('.sd-top, .sd-wrap').forEach(el => { if (!el.closest('#statusView')) el.style.display = 'none'; });
   const ov = sdSt$('launcherOverlay'); if (ov) ov.classList.add('hidden');
   const wrap = sdSt$('appWrapper'); if (wrap) wrap.classList.remove('active');
   sdSt$('statusView').style.display = 'block';
@@ -60,7 +60,7 @@ function sdStatusBack() {
   sdSt$('statusView').style.display = 'none';
   if (sdStatusOrigin === 'onboarding') {
     // Volver al onboarding (el screen activo sigue siendo el de tipo de envío).
-    document.querySelectorAll('.sd-top, .sd-wrap').forEach(el => { el.style.display = ''; });
+    document.querySelectorAll('.sd-top, .sd-wrap').forEach(el => { if (!el.closest('#statusView')) el.style.display = ''; });
   } else {
     const ov = sdSt$('launcherOverlay'); if (ov) ov.classList.remove('hidden');
   }
