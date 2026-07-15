@@ -41,7 +41,10 @@
    ======================================== */
 
 (function (global) {
-  // TODO: reemplazar por la URL real de la Edge Function esaw-proxy.
+  // URL de la Edge Function esaw-proxy (mismo proyecto Supabase que el
+  // signaturit-proxy). Funciona apenas Marcos la despliegue con el slug
+  // `esaw-proxy` — ver functions/esaw-proxy/README.md (¡deploy con
+  // --no-verify-jwt!). Si se despliega con otro nombre/proyecto, cambiar acá.
   const ESAW_PROXY_URL = 'https://plejrqzzxnypnxxnamxj.supabase.co/functions/v1/esaw-proxy';
 
   const ENVS = {

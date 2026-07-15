@@ -206,9 +206,12 @@ producto le habla.
   Flujo `upload → prepare → envelope/send`, envío secuencial por loop (NO
   `/envelopebulk/send`, decisión del equipo). **Probado end-to-end contra el
   sandbox demo** (envelope real creado, viewer link funcional).
-- [ ] Proxy espejo del de Signaturit (`esaw-proxy`, token por header como
-  `apiToken` — eSAW **no** usa `Authorization: Bearer`). **Pendiente:** hoy
-  `ESAW_PROXY_URL` en `esaw.js` es un placeholder.
+- [~] Proxy espejo del de Signaturit (`esaw-proxy`, token por header como
+  `apiToken` — eSAW **no** usa `Authorization: Bearer`). **Código escrito** en
+  `functions/esaw-proxy/` (Edge Function Deno + README). Confirmado que eSAW
+  bloquea al browser por CORS (preflight OPTIONS → 405), así que el proxy es
+  necesario. **Falta desplegarlo** en el proyecto Supabase (lo hace Marcos, con
+  `--no-verify-jwt`); la URL ya coincide con `ESAW_PROXY_URL` en `esaw.js`.
 - [ ] Convención de nombres de campo para **múltiples firmantes** en un mismo
   PDF (ej. `sig_1`, `sig_2`) — con 1 firmante ya funciona; con varios falta.
 - Docs de integración eSAW de referencia en `docs/esaw/`.
