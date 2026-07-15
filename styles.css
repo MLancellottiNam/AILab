@@ -428,6 +428,9 @@ td { padding:8px 12px; border-bottom:1px solid var(--surface-2); max-width:200px
 /* Setup del envío al venir del builder: las credenciales ya vienen del
    onboarding → se ocultan. Se prellenan en js/bridge.js. */
 body.sd-bridge #setup-creds { display:none; }
+/* El API token nunca se muestra en el flujo de envío: siempre viene precargado
+   (preprod) y viaja por header. Se oculta también en el flujo nativo. */
+#cfg-token-card { display:none; }
 /* Opciones avanzadas colapsables (asunto, marca, reply-to, cuerpo, plantilla, variables). */
 .setup-advanced { border:1px solid var(--border); border-radius:9px; margin-bottom:14px; background:var(--surface-2); overflow:hidden; }
 .setup-advanced > .setup-advanced-summary { cursor:pointer; list-style:none; padding:12px 15px; font-size:13px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:8px; user-select:none; }
