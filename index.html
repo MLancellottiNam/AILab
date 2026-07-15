@@ -262,57 +262,63 @@
   <section class="sd-screen" id="s-builder">
     <div class="sdb-grid">
       <div class="sdb-col">
-        <!-- 1. Documento base -->
+        <!-- 1. Data (primero: alimenta los campos del redactor) -->
         <div class="sdb-card">
-          <h3><span class="sdb-num">1</span> Base document</h3>
-          <div class="sdb-tabs">
-            <button class="sdb-tab on" id="sdbTabUpload" onclick="sdbSetDocMode('upload')">Upload file</button>
-            <button class="sdb-tab" id="sdbTabWrite" onclick="sdbSetDocMode('write')">Write or paste</button>
-          </div>
-
-          <div id="sdbModeUpload">
-            <label class="sdb-drop" id="sdbDropDoc">
-              <input type="file" id="sdbFileDoc" accept=".docx,.txt">
-              <div id="sdbDropDocLabel">Upload your <b>template.docx</b> or <b>.txt</b><br><span class="sdb-sub">with or without variables — we detect them for you</span></div>
-            </label>
-          </div>
-
-          <div id="sdbModeWrite" style="display:none">
-            <textarea class="sdb-editor" id="sdbDocEditor" placeholder="Paste your contract here, exactly as you have it.
-
-No special format needed. You can write:
-
-  Client name: ________________
-  domiciled at [address]
-  Signature: ____________
-
-...and we detect the fields."></textarea>
-            <div class="sdb-col-tray" id="sdbColTray" style="display:none">
-              <div class="sdb-col-tray-lbl">Drag or click a column to insert it as a variable:</div>
-              <div class="sdb-col-chips" id="sdbColChips"></div>
-            </div>
-            <div class="sdb-editor-tools">
-              <button class="sdb-mini-btn" id="sdbBtnDetectIA" disabled onclick="sdbDetectWithIA()">🔒 Detect with AI</button>
-              <button class="sdb-mini-btn" onclick="sdbDetectManual()">Detect by patterns</button>
-              <button class="sdb-mini-btn" onclick="sdbLoadSample()">See example</button>
-            </div>
-            <div class="sdb-detect-note" id="sdbDetectNote"></div>
-            <div id="sdbFieldsEditor" style="margin-top:10px"></div>
-          </div>
-
-          <div class="sdb-hint" id="sdbDocHint">You can paste the text however it comes: underscores, <code>[brackets]</code> or blank spaces. <code>{{variables}}</code> also work if you already use them.</div>
-          <div class="sdb-vars" id="sdbVarsBox"></div>
-        </div>
-
-        <!-- 2. Data -->
-        <div class="sdb-card">
-          <h3><span class="sdb-num">2</span> Data</h3>
+          <h3><span class="sdb-num">1</span> Your data</h3>
           <label class="sdb-drop" id="sdbDropData">
             <input type="file" id="sdbFileData" accept=".csv,.json,.xlsx,.xls">
             <div id="sdbDropDataLabel">Upload <b>data.csv / .xlsx / .json</b></div>
           </label>
-          <div class="sdb-hint" id="sdbDataInfo"></div>
+          <div class="sdb-hint" id="sdbDataInfo">Your columns become the document's variables — no mapping to guess.</div>
           <div class="sdb-quota" id="sdbQuotaBox" style="display:none"><span>Plan usage</span><span id="sdbQuotaTxt"></span></div>
+        </div>
+
+        <!-- 2. Document (bloqueado hasta que haya datos) -->
+        <div class="sdb-card locked" id="sdbDocCard">
+          <h3><span class="sdb-num">2</span> The document</h3>
+          <div class="sdb-locknote" id="sdbLockNote">⤴ Upload your data first — then we draft the document with the right fields.</div>
+
+          <!-- Redactor asistido -->
+          <label class="sdb-lbl">What do you need to send?</label>
+          <textarea class="sdb-brief" id="sdbBrief" placeholder="In your own words. e.g. 'hi, I want them to sign their policy renewal'"></textarea>
+          <div class="sdb-composer-controls">
+            <select id="sdbTone" title="Tone">
+              <option value="formal">Formal</option>
+              <option value="neutral" selected>Neutral</option>
+              <option value="close">Warm</option>
+              <option value="commercial">Commercial</option>
+            </select>
+            <select id="sdbLang" title="Language">
+              <option value="es">ES</option>
+              <option value="en" selected>EN</option>
+              <option value="pt">PT</option>
+              <option value="it">IT</option>
+              <option value="fr">FR</option>
+            </select>
+            <select id="sdbLen" title="Length">
+              <option value="short">Short</option>
+              <option value="medium" selected>Medium</option>
+              <option value="detailed">Detailed</option>
+            </select>
+            <button class="btn btn-primary sdb-compose-btn" id="sdbComposeBtn" disabled onclick="sdbCompose()">✨ Draft with AI</button>
+          </div>
+          <div class="sdb-ai-disclaimer">⚠️ The assistant writes <b>form, not legal content</b>: no legal advice, no clause suggestions, no opinion on coverage. It drafts what you ask, in the tone you pick.</div>
+
+          <!-- Editor (resultado / manual) + columnas arrastrables -->
+          <div class="sdb-col-tray" id="sdbColTray" style="display:none">
+            <div class="sdb-col-tray-lbl">Drag or click a column to insert it as a variable:</div>
+            <div class="sdb-col-chips" id="sdbColChips"></div>
+          </div>
+          <textarea class="sdb-editor" id="sdbDocEditor" placeholder="Your document appears here. Edit it freely, drag in columns, or paste your own text and use 'Detect by patterns'."></textarea>
+          <div class="sdb-editor-tools">
+            <label class="sdb-mini-btn" style="cursor:pointer">Upload .docx/.txt<input type="file" id="sdbFileDoc" accept=".docx,.txt" style="display:none"></label>
+            <button class="sdb-mini-btn" onclick="sdbDetectManual()">Detect by patterns</button>
+            <button class="sdb-mini-btn" onclick="sdbLoadSample()">See example</button>
+          </div>
+          <div class="sdb-detect-note" id="sdbDetectNote"></div>
+          <div id="sdbFieldsEditor" style="margin-top:10px"></div>
+          <div class="sdb-hint" id="sdbDocHint">Variables come from your data columns, so mapping resolves itself. <code>{{sign}}</code> is the signature anchor.</div>
+          <div class="sdb-vars" id="sdbVarsBox"></div>
         </div>
 
         <!-- 3. Brand -->
