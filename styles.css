@@ -440,6 +440,10 @@ body.sd-bridge #setup-creds { display:none; }
 .setup-advanced-hint { font-weight:400; color:var(--text-soft,#9aa4b2); font-size:11.5px; }
 .setup-advanced-body { padding:0 15px 15px; }
 
+/* Acceso a "Check status" desde la barra superior (global, independiente). */
+.sd-topstatus { background:transparent; border:1px solid var(--border); color:var(--text-soft,#9aa4b2); font-size:12px; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer; transition:all .15s ease; }
+.sd-topstatus:hover { border-color:var(--sig-primary); color:var(--sig-primary); }
+
 /* Separador + fila "Check status" en el screen de tipo de envío (onboarding). */
 .sd-checkstatus-sep { display:flex; align-items:center; gap:12px; margin:18px 0 12px; color:var(--text-soft,#9aa4b2); font-size:11px; letter-spacing:.14em; text-transform:uppercase; }
 .sd-checkstatus-sep::before, .sd-checkstatus-sep::after { content:''; flex:1; height:1px; background:var(--border); }
