@@ -107,6 +107,9 @@ const I18N = {
     'sendtype.simple': 'Simple signature', 'sendtype.simpleDesc': 'One-click signing',
     'sendtype.email': 'Certified email', 'sendtype.emailDesc': 'Certify your communications',
     'sendtype.sms': 'Certified SMS', 'sendtype.smsDesc': 'Certify your text messages',
+    'checkstatus.or': 'already sent?',
+    'checkstatus.title': 'Check status',
+    'checkstatus.desc': 'Upload the exported CSV to check the signature status of past sends',
     'sendtype.continue': 'Continue →',
 
     // ===== chat FLOW =====
@@ -278,6 +281,9 @@ const I18N = {
     'sendtype.simple': 'Firma simple', 'sendtype.simpleDesc': 'Firma de un clic',
     'sendtype.email': 'Email certificado', 'sendtype.emailDesc': 'Certificá tus comunicaciones',
     'sendtype.sms': 'SMS certificado', 'sendtype.smsDesc': 'Certificá tus mensajes de texto',
+    'checkstatus.or': '¿ya enviaste?',
+    'checkstatus.title': 'Consultar estado',
+    'checkstatus.desc': 'Subí el CSV exportado para ver el estado de firma de envíos anteriores',
     'sendtype.continue': 'Continuar →',
 
     'chat.q.sigType': '¡Hola! Soy el asistente de Namirial Dispatch 👋<br><br>Te ayudo a encontrar el plan que te sirve. Primero: <b>¿qué tipo de firma necesitás?</b><br><br><i>¿No estás seguro? Elegí la más parecida — te explico cada una.</i>',

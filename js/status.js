@@ -31,10 +31,21 @@ const SD_ST_MAP = {
 
 const sdSt$ = id => document.getElementById(id);
 
+// De dónde se abrió (para volver al lugar correcto): 'onboarding' (screen de
+// tipo de envío) o 'launcher' (menú del app).
+let sdStatusOrigin = 'launcher';
+
 function sdStatusOpen() {
+  // Recordar origen: si el onboarding está visible, venimos de ahí.
+  const wrapEl = document.querySelector('.sd-wrap');
+  sdStatusOrigin = (wrapEl && getComputedStyle(wrapEl).display !== 'none') ? 'onboarding' : 'launcher';
+
+  // Ocultar todo lo que pudiera estar visible.
+  document.querySelectorAll('.sd-top, .sd-wrap').forEach(el => { el.style.display = 'none'; });
   const ov = sdSt$('launcherOverlay'); if (ov) ov.classList.add('hidden');
   const wrap = sdSt$('appWrapper'); if (wrap) wrap.classList.remove('active');
   sdSt$('statusView').style.display = 'block';
+
   // reset
   sdSt$('statusResults').style.display = 'none';
   sdSt$('statusProgress').style.display = 'none';
@@ -47,7 +58,12 @@ function sdStatusOpen() {
 
 function sdStatusBack() {
   sdSt$('statusView').style.display = 'none';
-  const ov = sdSt$('launcherOverlay'); if (ov) ov.classList.remove('hidden');
+  if (sdStatusOrigin === 'onboarding') {
+    // Volver al onboarding (el screen activo sigue siendo el de tipo de envío).
+    document.querySelectorAll('.sd-top, .sd-wrap').forEach(el => { el.style.display = ''; });
+  } else {
+    const ov = sdSt$('launcherOverlay'); if (ov) ov.classList.remove('hidden');
+  }
 }
 
 /* ---- Lectura del CSV (reusa el tokenizer parseCsvLine de app.js) ---- */

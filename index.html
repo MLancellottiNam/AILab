@@ -236,6 +236,13 @@
         <span class="sd-radio"></span>
       </div>
     </div>
+    <!-- Opción aparte: no es un envío, es consultar el estado de envíos ya hechos. -->
+    <div class="sd-checkstatus-sep"><span data-i18n="checkstatus.or">already sent?</span></div>
+    <div class="sd-checkstatus-row" onclick="sdStatusOpen()">
+      <div class="ic">🔎</div>
+      <div class="tx"><h4 data-i18n="checkstatus.title">Check status</h4><p data-i18n="checkstatus.desc">Upload the exported CSV to check the signature status of past sends</p></div>
+      <span class="sd-checkstatus-arrow">→</span>
+    </div>
     <div class="sd-sendtype-note" id="sdSendTypeNote" style="display:none"></div>
     <div class="sd-nav">
       <button class="sd-btn ghost" onclick="goBack()" data-i18n="common.back">← Back</button>
@@ -475,7 +482,7 @@
       <div class="header-title">Namirial <span>Dispatch</span></div>
       <span class="header-badge mode-tag">Check status</span>
     </div>
-    <button class="btn-change-mode" onclick="sdStatusBack()">← Back to menu</button>
+    <button class="btn-change-mode" onclick="sdStatusBack()">← Back</button>
   </header>
   <div class="status-main">
     <h2 class="section-title">Check signature status</h2>
