@@ -107,11 +107,12 @@ INSTRUCTIONS:
 // si algo no está claro, devuelve su mejor estimación (el front valida igual).
 const EXTRACT_BRAND_PROMPT =
   `You extract the visual brand identity from this brand book PDF. Return ONLY this JSON:
-{"primary":"#rrggbb","secondary":"#rrggbb","font":"<primary typeface family name>"}
+{"primary":"#rrggbb","secondary":"#rrggbb","font":"<primary typeface family name>","footer":"<one-line document footer>"}
 - primary = the main brand color; secondary = the main accent/secondary color.
 - Colors MUST be 6-digit hex (e.g. #00B4B6). If a color is given in another format, convert it.
 - font = the name of the primary typeface family (e.g. "Inter", "Georgia", "Helvetica"). Just the family name.
-- If something is not explicit, give your best guess from the document. Never return anything but the JSON.`;
+- footer = a short, professional one-line footer for the brand's documents, drawn from the brand book: e.g. the company legal name, website, and/or a confidentiality note. Plain text, under ~120 characters, no markdown. This is FORM/branding only — do NOT invent legal clauses or terms. If nothing suitable is in the brand book, use an empty string "".
+- If a value is not explicit, give your best guess from the document. Never return anything but the JSON.`;
 
 // detect-fields: nombra los huecos de un texto pegado. Devuelve el `raw` EXACTO
 // de cada hueco para que el front calcule la posición sin confiar en offsets del
@@ -237,16 +238,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
         400,
       );
       if (!out.ok) return json(out.status, { ok: false, error: out.error });
-      const d = out.data as { primary?: unknown; secondary?: unknown; font?: unknown };
+      const d = out.data as { primary?: unknown; secondary?: unknown; font?: unknown; footer?: unknown };
       const hex = (v: unknown) => (typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v) ? v : null);
       const primary = hex(d?.primary);
       if (!primary) return json(502, { ok: false, error: "Could not read the brand colors" });
+      const footer = typeof d?.footer === "string" ? d.footer.trim().slice(0, 160) : "";
       return json(200, {
         ok: true,
         data: {
           primary,
           secondary: hex(d?.secondary) || primary,
           font: typeof d?.font === "string" && d.font.trim() ? d.font.trim() : "",
+          footer,
         },
       });
     }

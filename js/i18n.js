@@ -17,7 +17,7 @@
 const SD_LANG = (function () {
   const ov = (typeof localStorage !== 'undefined') && localStorage.getItem('SD_LANG');
   if (ov === 'es' || ov === 'en') return ov;
-  return (typeof navigator !== 'undefined' && /^es/i.test(navigator.language || '')) ? 'es' : 'en';
+  return 'en'; // UI en inglés por defecto (decisión de Marcos). ES sigue disponible vía override.
 })();
 
 const I18N = {

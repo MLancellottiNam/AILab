@@ -12,10 +12,10 @@ const API_ENDPOINTS = {
 };
 
 const OPERATION_LABELS = {
-  advanced: 'Firma avanzada',
-  simple:   'Firma simple',
-  email:    'Email certificado',
-  sms:      'SMS certificado'
+  advanced: 'Advanced signature',
+  simple:   'Simple signature',
+  email:    'Certified email',
+  sms:      'Certified SMS'
 };
 
 /* ===== STATE ===== */
@@ -36,20 +36,20 @@ let detectedVariables = [];    // ['company_name', 'insert alias', ...]
 let useTemplateVars = false;
 
 const OFFICIAL_VARIABLES = [
-  { name: 'signer_name', desc: 'Nombre del firmante', category: 'firmante' },
-  { name: 'signer_email', desc: 'Email del firmante', category: 'firmante' },
-  { name: 'sender_email', desc: 'Email del remitente', category: 'email' },
-  { name: 'filename', desc: 'Nombre del archivo', category: 'documento' },
-  { name: 'sign_button', desc: 'Botón de firma', category: 'email' },
-  { name: 'validate_button', desc: 'Botón de validación', category: 'email' },
-  { name: 'email_button', desc: 'Botón de email', category: 'email' },
-  { name: 'email_body', desc: 'Cuerpo del email', category: 'email' },
-  { name: 'logo', desc: 'Logo del branding', category: 'branding' },
-  { name: 'remaining_time', desc: 'Tiempo restante', category: 'documento' },
-  { name: 'code', desc: 'Código SMS', category: 'validación' },
-  { name: 'reason', desc: 'Razón de rechazo', category: 'documento' },
-  { name: 'dashboard_button', desc: 'Botón al dashboard', category: 'email' },
-  { name: 'signers', desc: 'Lista de firmantes', category: 'firmante' }
+  { name: 'signer_name', desc: 'Signer name', category: 'signer' },
+  { name: 'signer_email', desc: 'Signer email', category: 'signer' },
+  { name: 'sender_email', desc: 'Sender email', category: 'email' },
+  { name: 'filename', desc: 'File name', category: 'document' },
+  { name: 'sign_button', desc: 'Sign button', category: 'email' },
+  { name: 'validate_button', desc: 'Validate button', category: 'email' },
+  { name: 'email_button', desc: 'Email button', category: 'email' },
+  { name: 'email_body', desc: 'Email body', category: 'email' },
+  { name: 'logo', desc: 'Branding logo', category: 'branding' },
+  { name: 'remaining_time', desc: 'Remaining time', category: 'document' },
+  { name: 'code', desc: 'SMS code', category: 'validation' },
+  { name: 'reason', desc: 'Rejection reason', category: 'document' },
+  { name: 'dashboard_button', desc: 'Dashboard button', category: 'email' },
+  { name: 'signers', desc: 'Signers list', category: 'signer' }
 ];
 
 /* ========================================
@@ -92,10 +92,10 @@ function resetLauncher() {
 async function fetchTemplates() {
   const env = document.getElementById('cfg-env').value;
   const token = document.getElementById('cfg-token').value.trim();
-  if (!token) { alert('Ingresa el token API primero'); return; }
+  if (!token) { alert('Enter the API token first'); return; }
 
   const sel = document.getElementById('bulk-tpl-select');
-  sel.innerHTML = '<option value="">⏳ Cargando...</option>';
+  sel.innerHTML = '<option value="">⏳ Loading...</option>';
 
   try {
     const resp = await fetch(PROXY_URL, {
@@ -105,14 +105,14 @@ async function fetchTemplates() {
     });
     const data = await resp.json();
     if (!Array.isArray(data)) {
-      sel.innerHTML = '<option value="">❌ Error al obtener plantillas</option>';
+      sel.innerHTML = '<option value="">❌ Error fetching templates</option>';
       return;
     }
     templatesList = data;
-    sel.innerHTML = '<option value="">— Selecciona una plantilla —</option>' +
+    sel.innerHTML = '<option value="">— Select a template —</option>' +
       data.map(t => `<option value="${t.id}">${t.name || t.id}</option>`).join('');
   } catch (err) {
-    sel.innerHTML = '<option value="">❌ Error de conexión</option>';
+    sel.innerHTML = '<option value="">❌ Connection error</option>';
   }
 }
 
@@ -188,16 +188,16 @@ function rtColor(input, cmd) {
 
 function rtLink() {
   const rich = document.getElementById('cfg-body-rich');
-  if (!rich.isContentEditable) { alert('Activa primero el cuerpo del email'); return; }
-  alert('⚠️ Nota: Signaturit no permite URLs en el cuerpo del email.\nLos enlaces (<a href>) se eliminarán automáticamente al enviar.\nEl texto del enlace se conservará como texto plano.');
-  const url = prompt('URL del enlace (se mostrará solo en el editor):', 'https://');
+  if (!rich.isContentEditable) { alert('Enable the email body first'); return; }
+  alert('⚠️ Note: Signaturit does not allow URLs in the email body.\nLinks (<a href>) are removed automatically on send.\nThe link text is kept as plain text.');
+  const url = prompt('Link URL (shown only in the editor):', 'https://');
   if (!url || url === 'https://') return;
   rtFocus();
   const sel = window.getSelection();
   if (sel.rangeCount && !sel.isCollapsed) {
     document.execCommand('createLink', false, url);
   } else {
-    const text = prompt('Texto visible del enlace:', url) || url;
+    const text = prompt('Visible link text:', url) || url;
     document.execCommand('insertHTML', false, `<a href="${url}">${text}</a>`);
   }
 }
@@ -262,7 +262,7 @@ function toggleTemplateVars() {
     const zone = document.getElementById('wordDropZone');
     if (zone) {
       zone.classList.remove('has-file');
-      zone.innerHTML = '<span class="word-drop-icon">📄</span><span class="word-drop-text">Subir Word de referencia (.docx)</span>';
+      zone.innerHTML = '<span class="word-drop-icon">📄</span><span class="word-drop-text">Upload a reference Word (.docx)</span>';
     }
   }
 }
@@ -273,12 +273,12 @@ async function handleWordUpload(files) {
   if (!files || !files.length) return;
   const file = files[0];
   if (!file.name.toLowerCase().endsWith('.docx')) {
-    alert('Solo se aceptan archivos .docx');
+    alert('Only .docx files are accepted');
     return;
   }
 
   const zone = document.getElementById('wordDropZone');
-  zone.innerHTML = '<span class="word-drop-text">Procesando...</span>';
+  zone.innerHTML = '<span class="word-drop-text">Processing...</span>';
 
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -292,12 +292,12 @@ async function handleWordUpload(files) {
     templateVarMappings = unique.map(v => ({ widgetName: v, column: '' }));
 
     zone.classList.add('has-file');
-    zone.innerHTML = `<span class="file-info">✅ ${esc(file.name)} — ${unique.length} variable(s) detectada(s)</span>`;
+    zone.innerHTML = `<span class="file-info">✅ ${esc(file.name)} — ${unique.length} variable(s) detected</span>`;
 
     renderDetectedVariables();
   } catch (err) {
-    zone.innerHTML = '<span class="word-drop-icon">📄</span><span class="word-drop-text">Subir Word de referencia (.docx)</span>';
-    alert('Error al leer el archivo Word: ' + err.message);
+    zone.innerHTML = '<span class="word-drop-icon">📄</span><span class="word-drop-text">Upload a reference Word (.docx)</span>';
+    alert('Error reading the Word file: ' + err.message);
   }
 }
 
@@ -325,31 +325,31 @@ function renderColumnDescriptions() {
   let cols = [];
   if (isSMS) {
     cols = [
-      { name: 'phone / telefono', info: 'Número de teléfono del destinatario', req: true },
-      { name: 'name / nombre', info: 'Nombre del destinatario', req: false },
+      { name: 'phone / telefono', info: 'Recipient phone number', req: true },
+      { name: 'name / nombre', info: 'Recipient name', req: false },
     ];
   } else {
     cols = [
-      { name: 'email / correo', info: 'Email del destinatario principal', req: true },
-      { name: 'name / nombre', info: 'Nombre del destinatario', req: false },
-      { name: 'archivo / file', info: 'Nombre del PDF a adjuntar (sin extensión o con .pdf)', req: false },
+      { name: 'email / correo', info: 'Primary recipient email', req: true },
+      { name: 'name / nombre', info: 'Recipient name', req: false },
+      { name: 'archivo / file', info: 'Name of the PDF to attach (with or without .pdf)', req: false },
     ];
     if (isAdvanced) {
       cols.push(
-        { name: 'email_2, email_3...', info: 'Emails de firmantes adicionales', req: false },
-        { name: 'name_2, name_3...', info: 'Nombres de firmantes adicionales', req: false }
+        { name: 'email_2, email_3...', info: 'Additional signer emails', req: false },
+        { name: 'name_2, name_3...', info: 'Additional signer names', req: false }
       );
     }
     if (useTemplate) {
       cols.push(
-        { name: 'variables de plantilla', info: 'Columnas adicionales con valores para los widgets de la plantilla (se mapean en el paso 3)', req: false }
+        { name: 'template variables', info: 'Extra columns with values for the template widgets (mapped in step 3)', req: false }
       );
     }
   }
 
   el.innerHTML = cols.map(c =>
     `<div class="col-desc-item">
-      <div><span class="col-name">${c.name}</span><span class="col-req ${c.req ? 'required' : 'optional'}">${c.req ? 'obligatorio' : 'opcional'}</span></div>
+      <div><span class="col-name">${c.name}</span><span class="col-req ${c.req ? 'required' : 'optional'}">${c.req ? 'required' : 'optional'}</span></div>
       <div class="col-info">${c.info}</div>
     </div>`
   ).join('');
@@ -449,7 +449,7 @@ function parseCSV(file) {
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
     const sep = text.split(';').length > text.split(',').length ? ';' : ',';
     const lines = text.split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) { alert('Archivo vacío o sin datos'); return; }
+    if (lines.length < 2) { alert('Empty file or no data'); return; }
 
     dataHeaders = parseCsvLine(lines[0], sep).map(h => h.trim());
     dataRows = [];
@@ -483,7 +483,7 @@ function parseJSON(file) {
     try {
       let data = JSON.parse(e.target.result);
       if (!Array.isArray(data)) { alert('El JSON debe ser un array de objetos'); return; }
-      if (!data.length) { alert('JSON vacío'); return; }
+      if (!data.length) { alert('Empty JSON'); return; }
       dataHeaders = Object.keys(data[0]);
       dataRows = data.map(obj => {
         const row = {};
@@ -503,7 +503,7 @@ function parseXLSX(file) {
       const wb = XLSX.read(e.target.result, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json(ws, { defval: '' });
-      if (!raw.length) { alert('Hoja vacía'); return; }
+      if (!raw.length) { alert('Empty sheet'); return; }
       dataHeaders = Object.keys(raw[0]);
       dataRows = raw.map(obj => {
         const row = {};
@@ -543,7 +543,7 @@ function renderPDFList() {
 
 /* ===== STEPS ===== */
 function goToStep(n) {
-  if (n === 3 && dataRows.length === 0) { alert('Primero sube un archivo de datos'); return; }
+  if (n === 3 && dataRows.length === 0) { alert('Upload a data file first'); return; }
   if (n === 3) buildMapping();
   if (n === 4) buildSummary();
   currentStep = n;
@@ -570,38 +570,38 @@ function buildMapping() {
   const hasPDFs = Object.keys(pdfFiles).length > 0;
 
   document.getElementById('mappingDesc').innerHTML = isSMS
-    ? 'Asigna las columnas. Solo <strong>Teléfono</strong> es obligatorio.'
-    : 'Asigna las columnas. Solo <strong>Email</strong> es obligatorio.';
+    ? 'Map the columns. Only <strong>Phone</strong> is required.'
+    : 'Map the columns. Only <strong>Email</strong> is required.';
 
   let html = '';
 
   if (isSMS) {
-    html += buildMappingGroup('Destinatario', [
-      { key: 'phone', label: 'Teléfono', req: true },
-      { key: 'name', label: 'Nombre', req: false }
+    html += buildMappingGroup('Recipient', [
+      { key: 'phone', label: 'Phone', req: true },
+      { key: 'name', label: 'Name', req: false }
     ]);
   } else {
     // Signer 1
-    html += buildMappingGroup('Firmante 1', [
+    html += buildMappingGroup('Signer 1', [
       { key: 'email', label: 'Email', req: true },
-      { key: 'name', label: 'Nombre', req: false }
+      { key: 'name', label: 'Name', req: false }
     ]);
 
     // Additional signers for advanced
     if (isAdvanced) {
       for (let s = 2; s <= bulkSignerCount; s++) {
-        html += buildMappingGroup(`Firmante ${s}`, [
+        html += buildMappingGroup(`Signer ${s}`, [
           { key: `email_${s}`, label: `Email ${s}`, req: false },
           { key: `name_${s}`, label: `Nombre ${s}`, req: false }
         ], true, s);
       }
-      html += `<div style="margin-bottom:14px"><button class="btn-add" onclick="addBulkSigner()">+ Añadir firmante</button></div>`;
+      html += `<div style="margin-bottom:14px"><button class="btn-add" onclick="addBulkSigner()">+ Add signer</button></div>`;
     }
 
     // File mapping (only if PDFs were uploaded)
     if (hasPDFs) {
-      html += buildMappingGroup('Documento', [
-        { key: 'fileName', label: 'Archivo PDF', req: false }
+      html += buildMappingGroup('Document', [
+        { key: 'fileName', label: 'PDF file', req: false }
       ]);
     }
   }
@@ -626,7 +626,7 @@ function buildMappingGroup(title, fields, removable, signerNum) {
   const removeBtn = removable ? `<button class="btn-remove-signer" onclick="removeBulkSigner(${signerNum})" style="font-size:12px">×</button>` : '';
   let html = `<div class="mapping-group"><div class="mapping-group-title"><span>${title}</span>${removeBtn}</div><div class="mapping-grid">`;
   fields.forEach(f => {
-    const opts = ['<option value="">— Sin asignar —</option>']
+    const opts = ['<option value="">— Unassigned —</option>']
       .concat(dataHeaders.map(h => `<option value="${h}" ${autoMatch(f.key, h) ? 'selected' : ''}>${h}</option>`)).join('');
     html += `<div class="mapping-card"><span class="mapping-label">${f.label} ${f.req ? '<span class="req">*</span>' : ''}</span><select id="map-${f.key}" onchange="updatePreview()">${opts}</select></div>`;
   });
@@ -653,22 +653,22 @@ function buildTemplateVarSection() {
 }
 
 function buildDetectedVarMappingSection() {
-  const colOpts = ['<option value="">— Sin asignar —</option>']
+  const colOpts = ['<option value="">— Unassigned —</option>']
     .concat(dataHeaders.map(h => `<option value="${h}">${h}</option>`)).join('');
 
   // Auto-suggest on first build if no columns assigned yet
   const needsAutoSuggest = templateVarMappings.every(m => !m.column);
 
   let html = `<div class="mapping-group template-var-group">
-    <div class="mapping-group-title"><span>Mapeo de variables de plantilla</span><span class="stat-badge">${detectedVariables.length} variables</span></div>
-    <p class="tpl-var-desc">Variables detectadas en el Word. Asigna cada una a la columna correspondiente del archivo de datos.</p>
+    <div class="mapping-group-title"><span>Template variable mapping</span><span class="stat-badge">${detectedVariables.length} variables</span></div>
+    <p class="tpl-var-desc">Variables detected in the Word file. Map each one to its matching data column.</p>
     <div id="tplVarMappingsContainer">`;
 
   templateVarMappings.forEach((m, i) => {
     const suggested = needsAutoSuggest ? autoSuggestColumn(m.widgetName, dataHeaders) : m.column;
     if (needsAutoSuggest) m.column = suggested;
 
-    const opts = ['<option value="">— Sin asignar —</option>']
+    const opts = ['<option value="">— Unassigned —</option>']
       .concat(dataHeaders.map(h => `<option value="${h}" ${h === suggested ? 'selected' : ''}>${h}</option>`)).join('');
 
     html += `<div class="tpl-var-row detected-var-row">
@@ -683,7 +683,7 @@ function buildDetectedVarMappingSection() {
 }
 
 function buildManualVarMappingSection() {
-  const colOpts = ['<option value="">— Sin asignar —</option>']
+  const colOpts = ['<option value="">— Unassigned —</option>']
     .concat(dataHeaders.map(h => `<option value="${h}">${h}</option>`)).join('');
 
   let html = `<div class="mapping-group template-var-group">
@@ -892,23 +892,23 @@ function renderPreviewTable() {
   document.getElementById('previewStats').innerHTML = `<span class="stat-badge success">✓ ${valid}</span>` + (missing ? `<span class="stat-badge error">✗ ${missing}</span>` : '');
 
   if (isSMS) {
-    document.getElementById('previewHead').innerHTML = '<tr><th>#</th><th>Estado</th><th>Teléfono</th><th>Nombre</th></tr>';
+    document.getElementById('previewHead').innerHTML = '<tr><th>#</th><th>Status</th><th>Phone</th><th>Name</th></tr>';
     document.getElementById('previewBody').innerHTML = matchedData.map((d, i) => {
       const ok = !!d.phone;
-      return `<tr><td>${i+1}</td><td><span class="status-dot ${ok?'matched':'missing'}"></span>${ok?'OK':'Falta'}</td><td>${d.phone||'—'}</td><td>${d.name||'—'}</td></tr>`;
+      return `<tr><td>${i+1}</td><td><span class="status-dot ${ok?'matched':'missing'}"></span>${ok?'OK':'Missing'}</td><td>${d.phone||'—'}</td><td>${d.name||'—'}</td></tr>`;
     }).join('');
   } else {
-    const signersCol = isAdvanced ? '<th>Firmantes</th>' : '';
-    const fileCol = hasPDFs ? '<th>Archivo</th><th>Tamaño</th>' : '';
+    const signersCol = isAdvanced ? '<th>Signers</th>' : '';
+    const fileCol = hasPDFs ? '<th>File</th><th>Size</th>' : '';
     const tplVars = useTemplate ? getActiveTemplateVarMappings() : [];
     const tplVarHeaders = tplVars.map(v => `<th>${esc(v.widgetName)}</th>`).join('');
-    document.getElementById('previewHead').innerHTML = `<tr><th>#</th><th>Estado</th><th>Email</th><th>Nombre</th>${signersCol}${fileCol}${tplVarHeaders}</tr>`;
+    document.getElementById('previewHead').innerHTML = `<tr><th>#</th><th>Status</th><th>Email</th><th>Name</th>${signersCol}${fileCol}${tplVarHeaders}</tr>`;
     document.getElementById('previewBody').innerHTML = matchedData.map((d, i) => {
       const ok = d.email && d.fileMatch;
-      const sigTd = isAdvanced ? `<td>${d.signers.length} firmante(s)</td>` : '';
+      const sigTd = isAdvanced ? `<td>${d.signers.length} signer(s)</td>` : '';
       const fileTd = hasPDFs ? `<td>${d.fileName||'—'}</td><td class="${d.fileSize>5e6?'size-over':d.fileSize>3e6?'size-warn':'size-ok'}">${d.fileSize?formatSize(d.fileSize):'—'}</td>` : '';
       const tplVarTds = tplVars.map(v => `<td>${esc(d.rawRow[v.column] || '—')}</td>`).join('');
-      return `<tr><td>${i+1}</td><td><span class="status-dot ${ok?'matched':'missing'}"></span>${ok?'OK':'Falta'}</td><td>${d.email||'—'}</td><td>${d.name||'—'}</td>${sigTd}${fileTd}${tplVarTds}</tr>`;
+      return `<tr><td>${i+1}</td><td><span class="status-dot ${ok?'matched':'missing'}"></span>${ok?'OK':'Missing'}</td><td>${d.email||'—'}</td><td>${d.name||'—'}</td>${sigTd}${fileTd}${tplVarTds}</tr>`;
     }).join('');
   }
 }
@@ -920,16 +920,16 @@ function buildSummary() {
   const validCount = isSMS ? matchedData.filter(d => d.phone).length : matchedData.filter(d => d.email && d.fileMatch).length;
 
   let html = '<div class="summary-grid">';
-  html += `<span>Operación:</span><code>${OPERATION_LABELS[operationType]}</code>`;
-  html += `<span>Entorno:</span><code>${env.includes('sandbox') ? 'Sandbox' : 'Producción'}</code>`;
-  html += `<span>Envíos válidos:</span><code>${validCount} de ${matchedData.length}</code>`;
+  html += `<span>Operation:</span><code>${OPERATION_LABELS[operationType]}</code>`;
+  html += `<span>Entorno:</span><code>${env.includes('sandbox') ? 'Sandbox' : 'Production'}</code>`;
+  html += `<span>Valid sends:</span><code>${validCount} de ${matchedData.length}</code>`;
 
   if (useTemplate) {
     const sel = document.getElementById('bulk-tpl-select');
-    html += `<span>Plantilla:</span><code>${sel?.options[sel.selectedIndex]?.text || '—'}</code>`;
+    html += `<span>Template:</span><code>${sel?.options[sel.selectedIndex]?.text || '—'}</code>`;
     const tplVars = getActiveTemplateVarMappings();
     if (tplVars.length) {
-      html += `<span>Variables de plantilla:</span><code>${tplVars.map(v => v.widgetName + ' ← ' + v.column).join(', ')}</code>`;
+      html += `<span>Template variables:</span><code>${tplVars.map(v => v.widgetName + ' ← ' + v.column).join(', ')}</code>`;
     }
   }
 
@@ -937,7 +937,7 @@ function buildSummary() {
     const subj = document.getElementById('toggle-subject')?.checked ? document.getElementById('cfg-subject').value : '';
     const body = document.getElementById('toggle-body')?.checked ? getBodyValue() : '';
     const brand = document.getElementById('toggle-branding')?.checked ? document.getElementById('cfg-branding').value : '';
-    if (subj) html += `<span>Asunto:</span><code>${esc(subj)}</code>`;
+    if (subj) html += `<span>Subject:</span><code>${esc(subj)}</code>`;
     if (body) {
       const plain = body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
       html += `<span>Body:</span><code>${esc(plain.substring(0, 60))}${plain.length > 60 ? '...' : ''}</code>`;
@@ -991,29 +991,29 @@ function resolveVars(text, item) {
 
 async function startBulkSend() {
   const token = document.getElementById('cfg-token').value.trim();
-  if (!token) { alert('Falta el token API'); return; }
+  if (!token) { alert('API token is missing'); return; }
 
   const provider = document.getElementById('cfg-provider')?.value || 'signaturit';
   const isSMS = operationType === 'sms';
   const hasPDFs = Object.keys(pdfFiles).length > 0;
 
-  if (provider === 'esaw' && isSMS) { alert('eSAW no soporta SMS certificado — elige Signaturit o cambia el tipo de solicitud'); return; }
-  if (provider === 'esaw' && useTemplate) { alert('eSAW no soporta plantillas de Signaturit — desmarca "usar plantilla"'); return; }
+  if (provider === 'esaw' && isSMS) { alert('eSAW does not support certified SMS — pick Signaturit or change the request type'); return; }
+  if (provider === 'esaw' && useTemplate) { alert('eSAW does not support Signaturit templates — uncheck "use template"'); return; }
 
   const validItems = isSMS
     ? matchedData.filter(d => d.phone)
     : matchedData.filter(d => d.email && d.fileMatch);
 
-  if (!validItems.length) { alert('No hay envíos válidos'); return; }
+  if (!validItems.length) { alert('No valid sends'); return; }
 
   if (useTemplate && !isSMS) {
     const tplId = document.getElementById('bulk-tpl-select')?.value;
-    if (!tplId) { alert('Selecciona una plantilla'); return; }
+    if (!tplId) { alert('Select a template'); return; }
   }
 
   if (hasPDFs && !isSMS) {
     const big = validItems.filter(d => d.fileSize > 5e6);
-    if (big.length && !confirm(`${big.length} archivo(s) superan 5 MB. ¿Continuar?`)) return;
+    if (big.length && !confirm(`${big.length} file(s) exceed 5 MB. Continue?`)) return;
   }
 
   // Validar URLs en subject/body — Signaturit NO permite URLs en ningún tipo
@@ -1027,13 +1027,13 @@ async function startBulkSend() {
   const sanitizedBody = isEmail ? sanitizeBodyHtml(preBody) : preBody;
 
   const fieldsWithUrls = [];
-  if (urlRegex.test(preSubj)) fieldsWithUrls.push('Asunto');
+  if (urlRegex.test(preSubj)) fieldsWithUrls.push('Subject');
   // Para email certificado, las URLs se codifican → no validar
-  if (!isEmail && urlRegex.test(preBody)) fieldsWithUrls.push('Cuerpo del email');
-  if (isSMS && urlRegex.test(preSmsBody)) fieldsWithUrls.push('Cuerpo del SMS');
+  if (!isEmail && urlRegex.test(preBody)) fieldsWithUrls.push('Email body');
+  if (isSMS && urlRegex.test(preSmsBody)) fieldsWithUrls.push('SMS body');
 
   if (fieldsWithUrls.length) {
-    alert(`⚠️ Signaturit no permite URLs en: ${fieldsWithUrls.join(', ')}.\n\nElimina los enlaces (http://, https://, www.) antes de enviar.`);
+    alert(`⚠️ Signaturit does not allow URLs in: ${fieldsWithUrls.join(', ')}.\n\nRemove the links (http://, https://, www.) before sending.`);
     return;
   }
 
@@ -1063,8 +1063,8 @@ async function startBulkSend() {
       `<span class="log-stat ok">${ok} ok</span><span class="log-stat fail">${err} err</span>`;
   };
 
-  const envLabel = env.includes('sandbox') ? 'Sandbox' : 'Producción';
-  log(`Iniciando ${validItems.length} envío(s) de <strong>${OPERATION_LABELS[operationType]}</strong> en ${envLabel}`, 'sys', 'dim');
+  const envLabel = env.includes('sandbox') ? 'Sandbox' : 'Production';
+  log(`Starting ${validItems.length} ${OPERATION_LABELS[operationType]} send(s) on ${envLabel}`, 'sys', 'dim');
 
   const subj = preSubj;
   const body = sanitizedBody;
@@ -1165,7 +1165,7 @@ async function startBulkSend() {
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
   const rate = validItems.length > 0 ? ((ok / validItems.length) * 100).toFixed(0) : 0;
-  log(`Completado en ${elapsed}s — ${ok} enviados, ${err} errores — Tasa de éxito: ${rate}%`, 'done', 'summary');
+  log(`Completed in ${elapsed}s — ${ok} sent, ${err} errors — Success rate: ${rate}%`, 'done', 'summary');
   updateLiveStats();
   renderResults(isSMS);
 }
@@ -1179,16 +1179,16 @@ function renderResults(isSMS) {
   const errN = sendLog.filter(l => l.status === 'error').length;
   document.getElementById('resultsStats').innerHTML = `<span class="stat-badge success">✓ ${okN}</span>` + (errN ? `<span class="stat-badge error">✗ ${errN}</span>` : '');
 
-  const dest = isSMS ? 'Teléfono' : 'Email';
-  document.getElementById('resultsHead').innerHTML = `<tr><th>#</th><th>Estado</th><th>${dest}</th><th>ID / Error</th></tr>`;
+  const dest = isSMS ? 'Phone' : 'Email';
+  document.getElementById('resultsHead').innerHTML = `<tr><th>#</th><th>Status</th><th>${dest}</th><th>ID / Error</th></tr>`;
   document.getElementById('resultsBody').innerHTML = sendLog.map((l, i) =>
-    `<tr><td>${i+1}</td><td><span class="status-dot ${l.status === 'ok' ? 'sent' : 'failed'}"></span>${l.status === 'ok' ? 'Enviado' : 'Error'}</td><td>${l.email || l.phone}</td><td>${l.id || l.error}</td></tr>`
+    `<tr><td>${i+1}</td><td><span class="status-dot ${l.status === 'ok' ? 'sent' : 'failed'}"></span>${l.status === 'ok' ? 'Sent' : 'Error'}</td><td>${l.email || l.phone}</td><td>${l.id || l.error}</td></tr>`
   ).join('');
   document.getElementById('exportArea').style.display = 'block';
 }
 
 function exportLog() {
-  const lines = ['estado,destinatario,id_o_error'];
+  const lines = ['status,recipient,id_or_error'];
   sendLog.forEach(l => lines.push(`${l.status},${l.email || l.phone || ''},${l.id || l.error || ''}`));
   const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -1258,7 +1258,7 @@ function addTemplateSampleCols(data) {
 
 function downloadTemplate(format) {
   const { headers, rows } = getTemplateSampleData();
-  const fileName = `plantilla_${operationType}`;
+  const fileName = `template_${operationType}`;
 
   if (format === 'csv') {
     const lines = [headers.join(',')];

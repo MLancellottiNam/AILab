@@ -21,7 +21,8 @@ const builderState = {
   previewIdx: 0,
   dispatchDocs: [],  // DispatchDoc[] de la última corrida (en memoria)
   detected: [],      // campos detectados en el editor libre
-  logoDataUrl: ''    // logo de marca (dataURL en memoria, cero persistencia)
+  logoDataUrl: '',   // logo de marca (dataURL en memoria, cero persistencia)
+  brandFooter: ''    // footer de marca (lo deriva extract-brand del brandbook)
 };
 
 /* ===== Helpers locales ===== */
@@ -588,8 +589,11 @@ async function sdbExtractBrand(files) {
     sdb$('sdbBrandHex').value = data.primary;
     sdbSyncBrand();
     const fontVal = sdbMatchFont(data.font);
-    if (fontVal) { sdb$('sdbBrandFont').value = fontVal; sdbRenderPreview(); }
-    sdbNote(`✓ Brand applied from <b>${sdbEsc(f.name)}</b>: color <code>${sdbEsc(data.primary)}</code>${data.font ? ` · font “${sdbEsc(data.font)}”${fontVal ? '' : ' (no close match, kept current)'}` : ''}. Tweak it if you like.`, 'ok');
+    if (fontVal) { sdb$('sdbBrandFont').value = fontVal; }
+    // Footer de marca derivado del brandbook → va al pie de cada PDF.
+    builderState.brandFooter = (data && typeof data.footer === 'string') ? data.footer.trim() : '';
+    sdbRenderPreview();
+    sdbNote(`✓ Brand applied from <b>${sdbEsc(f.name)}</b>: color <code>${sdbEsc(data.primary)}</code>${data.font ? ` · font “${sdbEsc(data.font)}”${fontVal ? '' : ' (no close match, kept current)'}` : ''}${builderState.brandFooter ? ' · footer added' : ''}. Tweak it if you like.`, 'ok');
   } catch (e) {
     // REGLA DE ORO: sin IA / error → selección manual, sin romper nada.
     sdbNote('We couldn\'t read the brand book with AI — set the color and font manually below.', 'warn');
@@ -670,8 +674,8 @@ function sdbBuildDocEl(row, idx) {
     <div class="sdb-body" style="padding:34px 48px 40px">
       ${sdbFillTemplate(builderState.docHtml, row)}
     </div>
-    <div style="border-top:1px solid #e6e9ef;margin:0 48px;padding:14px 0 20px;font-size:10px;color:#9aa4b2;display:flex;justify-content:space-between;font-family:monospace">
-      <span>${sdbEsc(title)}</span><span>Generated with Namirial Dispatch</span>
+    <div style="border-top:1px solid #e6e9ef;margin:0 48px;padding:14px 0 20px;font-size:10px;color:#9aa4b2;display:flex;justify-content:space-between;gap:16px;font-family:monospace">
+      <span>${sdbEsc(builderState.brandFooter || title)}</span><span style="white-space:nowrap">Generated with Namirial Dispatch</span>
     </div>`;
 
   // Espaciado de párrafos (por si el CSS de la hoja no aplica en el PDF).
